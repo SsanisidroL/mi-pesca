@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SargoGuru PRO - V3</title>
+    <title>SargoGuru PRO - V3.1</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -72,7 +72,7 @@
             </button>
             <span id="sitio-activo" class="text-sky-400 font-bold text-sm">Carrageiros ★</span>
         </div>
-        <div class="text-[9px] opacity-60">SargoGuru v3.0</div>
+        <div class="text-[9px] opacity-60">SargoGuru v3.1</div>
     </div>
 
     <div id="map"></div>
@@ -145,10 +145,18 @@
     </div>
 
     <script>
-        // Mapa
+        // Inicializar mapa
         var map = L.map('map', {zoomControl: false}).setView([42.558, -8.995], 13);
+        
+        // 1. Capa de Satélite
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
+        
+        // 2. NUEVA CAPA: Nombres de sitios y etiquetas de tierra (Híbrido)
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}').addTo(map);
+        
+        // 3. Capa de Marcas Marítimas
         L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png').addTo(map);
+        
         var marker = L.marker([42.558, -8.995]).addTo(map);
 
         function toggleSpots() {
@@ -160,7 +168,7 @@
             map.flyTo([lat, lng], 14);
             marker.setLatLng([lat, lng]);
             document.getElementById('sitio-activo').innerText = nombre + " ★";
-            toggleSpots(); // Cerrar menú
+            toggleSpots(); 
         }
     </script>
 </body>
