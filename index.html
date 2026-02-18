@@ -3,127 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SargoGuru ELITE FINAL</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <title>SargoGuru - Windguru Clone</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        #map { height: 280px; width: 100%; border-bottom: 4px solid #0c4a6e; }
-        .contenedor-tabla { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        table { border-collapse: collapse; min-width: 1800px; table-layout: fixed; background: #fff; }
-        td { border: 0.1px solid #e2e8f0; text-align: center; font-size: 10px; height: 45px; font-weight: bold; width: 70px; }
-        .label { 
-            position: sticky; left: 0; z-index: 100; background: #0c4a6e; color: #fff; 
-            font-size: 8px; text-transform: uppercase; width: 110px; text-align: left; padding-left: 8px; border-right: 3px solid #0ea5e9;
+        body { background-color: #f3f4f6; font-family: Arial, sans-serif; margin-bottom: 60px; }
+        
+        /* CONTENEDOR CON SCROLL LATERAL */
+        .wrapper { position: relative; overflow: hidden; border: 1px solid #ccc; background: white; }
+        .scroll-area { overflow-x: auto; margin-left: 110px; /* Ancho de la columna fija */ }
+        
+        .tab-guru { border-collapse: collapse; min-width: 1200px; font-size: 11px; text-align: center; }
+        .tab-guru td { border: 0.1px solid #ddd; height: 26px; font-weight: bold; width: 45px; }
+
+        /* COLUMNA IZQUIERDA FIJA */
+        .label-fix { 
+            position: absolute; left: 0; width: 110px; background: #f8f8f8; 
+            font-size: 9px; color: #555; text-align: left; padding-left: 5px;
+            display: flex; align-items: center; border-right: 2px solid #ddd; z-index: 10;
         }
-        .bg-calado { background-color: #082f49; color: #7dd3fc; }
-        .luna-celda { background-color: #1e293b; color: #f1f5f9; font-size: 14px; }
-        .o-ideal { background: #4169e1; color: #fff; }
-        .p-peligro { background: #ff0000; color: #fff; animation: blink 1.5s infinite; }
-        .v-suave { background: #90ee90; } .v-fuerte { background: #ffa500; color: #fff; }
-        .lluvia-celda { background: #e0f2fe; color: #0369a1; }
-        @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.6;} 100% {opacity: 1;} }
+
+        /* COLORES SEGÚN TUS FOTOS */
+        .v-verde { background: #4df04d; } .v-amar { background: #f0f030; }
+        .r-rojo { background: #f03030; color: white; } .r-rosa { background: #f030f0; color: white; }
+        .o-azul { background: #a0a0f0; } .p-alerta { background: #f04040; color: white; }
+        
+        /* GRÁFICO MAREA */
+        .marea-box { height: 60px; display: flex; align-items: flex-end; background: #eee; padding: 5px; gap: 1px; }
+        .bar { flex: 1; }
+        .up { background: linear-gradient(to top, #fff, #4ade80); border-top: 2px solid green; }
+        .down { background: linear-gradient(to top, #fff, #f87171); border-top: 2px solid red; }
     </style>
 </head>
-<body class="bg-slate-950">
+<body>
 
-    <div class="bg-sky-950 p-4 shadow-xl flex justify-between items-center text-white">
-        <div>
-            <h1 class="text-sky-400 font-black text-xl italic leading-none">SARGOGURU ELITE</h1>
-            <p id="info-lunar" class="text-[9px] uppercase mt-1 text-sky-200">Calculando fase lunar...</p>
+    <div class="bg-[#222] text-white p-2 flex justify-between items-center text-sm">
+        <div class="flex items-center gap-2">
+            <button onclick="toggleSpots()" class="bg-[#444] px-2 py-1 rounded text-[10px] border border-gray-600">
+                🔍 buscar spots...
+            </button>
+            <span class="font-bold text-sky-400">Carrageiros ★</span>
         </div>
-        <div class="text-center bg-blue-600 px-3 py-1 rounded">
-            <span class="text-[8px] block uppercase">Nota Pesca</span>
-            <span id="nota-pesca" class="text-xl font-black">--</span>
+        <div class="flex gap-2 text-[9px] opacity-80">
+            <span>☀️ 08:31</span><span>🌙 20:31</span>
         </div>
     </div>
 
-    <div id="map"></div>
-
-    <div class="m-2 bg-white rounded-xl shadow-2xl overflow-hidden contenedor-tabla border border-slate-300">
-        <table>
-            <tr id="f-hora"></tr>
-            <tr id="f-luna"></tr>
-            <tr id="f-calado"></tr>
-            <tr id="f-marea"></tr>
-            <tr id="f-lluvia"></tr>
-            <tr id="f-ola"></tr>
-            <tr id="f-per"></tr>
-            <tr id="f-vnt"></tr>
-        </table>
+    <div id="lista-favoritos" class="hidden bg-white border-b-2 border-black p-4 text-sm font-bold">
+        <p class="text-gray-400 text-[10px] mb-2">MIS FAVORITOS:</p>
+        <div class="grid grid-cols-2 gap-2">
+            <button class="bg-gray-100 p-2 rounded">★ Carrageiros</button>
+            <button class="bg-gray-100 p-2 rounded">★ Corrubedo</button>
+            <button class="bg-gray-100 p-2 rounded">★ Aguiño</button>
+        </div>
     </div>
 
-    <div id="consejo-box" class="p-3 mx-2 bg-sky-900 text-sky-100 rounded-lg text-[11px] italic border-l-4 border-sky-400 shadow-lg">
-        "Analizando condiciones de la puesta..."
+    <div class="wrapper mt-2">
+        <div class="absolute top-0 left-0 z-20">
+            <div class="label-fix" style="top:0px; height:26px">FECHA</div>
+            <div class="label-fix" style="top:26px; height:26px">VIENTO (kn)</div>
+            <div class="label-fix" style="top:52px; height:26px">RACHAS (kn)</div>
+            <div class="label-fix" style="top:78px; height:26px">DIR. VIENTO</div>
+            <div class="label-fix" style="top:104px; height:26px">OLA (m)</div>
+            <div class="label-fix" style="top:130px; height:26px">PERIODO (s)</div>
+        </div>
+
+        <div class="scroll-area">
+            <table class="tab-guru">
+                <tr class="bg-gray-100">
+                    <td>18. 16h</td><td>18. 18h</td><td>18. 20h</td><td>18. 22h</td><td>19. 03h</td><td>19. 06h</td><td>19. 09h</td><td>19. 12h</td><td>19. 15h</td><td>19. 18h</td>
+                </tr>
+                <tr>
+                    <td class="v-amar">19</td><td class="v-verde">16</td><td class="v-verde">15</td><td class="v-verde">15</td><td>11</td><td>10</td><td>7</td><td>10</td><td>10</td><td>9</td>
+                </tr>
+                <tr>
+                    <td class="r-rosa">32</td><td class="r-rojo">28</td><td class="r-rojo">26</td><td class="r-rosa">30</td><td class="v-amar">20</td><td class="v-amar">19</td><td class="v-verde">16</td><td>16</td><td>16</td><td>15</td>
+                </tr>
+                <tr>
+                    <td>➔</td><td>➔</td><td>➔</td><td>➔</td><td>↘</td><td>↘</td><td>↘</td><td>➔</td><td>➔</td><td>➔</td>
+                </tr>
+                <tr>
+                    <td class="o-azul">2.3</td><td class="o-azul">2.3</td><td class="o-azul">2.3</td><td class="o-azul">2.3</td><td>2.0</td><td>1.9</td><td>1.8</td><td>1.7</td><td>1.7</td><td>1.6</td>
+                </tr>
+                <tr>
+                    <td>11</td><td>11</td><td>12</td><td>12</td><td>12</td><td>12</td><td>12</td><td class="p-alerta">20</td><td class="p-alerta">20</td><td class="p-alerta">19</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="bg-white p-2 border-t mt-2">
+        <div class="flex justify-between items-center mb-2">
+            <span class="text-[10px] font-bold text-gray-500 uppercase italic">Gráfico de Mareas</span>
+            <span class="text-[9px] text-green-600 font-bold">11:45 PM ↑ ALTA</span>
+        </div>
+        <div class="marea-box">
+            <div class="bar down" style="height: 80%"></div><div class="bar down" style="height: 60%"></div>
+            <div class="bar down" style="height: 30%"></div><div class="bar up" style="height: 20%"></div>
+            <div class="bar up" style="height: 50%"></div><div class="bar up" style="height: 80%"></div>
+            <div class="bar up" style="height: 100%"></div><div class="bar down" style="height: 70%"></div>
+        </div>
+    </div>
+
+    <div class="fixed bottom-0 w-full bg-[#222] text-white flex justify-around p-2 text-[9px] uppercase font-bold border-t border-gray-700">
+        <div class="text-center opacity-60">🔍<br>Search</div>
+        <div class="text-center text-sky-400">★<br>Favoritos</div>
+        <div class="text-center opacity-60">🗺️<br>Mapas</div>
+        <div class="text-center opacity-60">⚙️<br>Opciones</div>
     </div>
 
     <script>
-        var map = L.map('map').setView([42.55, -8.95], 13);
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
-        L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png').addTo(map);
-
-        var marcador;
-        var fondoBase = 5.0;
-
-        map.on('click', e => {
-            if (marcador) { marcador.setLatLng(e.latlng); } 
-            else { marcador = L.marker(e.latlng).addTo(map); }
-            fondoBase = (Math.random() * 12 + 1).toFixed(1);
-            actualizarDatos();
-        });
-
-        function actualizarDatos() {
-            const horas = Array.from({length: 24}, (_, i) => (i < 10 ? '0' + i : i) + ':00');
-            const faseLuna = "🌕"; 
-            document.getElementById('info-lunar').innerText = `${faseLuna} LUNA LLENA (98% LUZ) - MAREAS VIVAS`;
-            
-            let hHora = '<td class="label">HORA UTC</td>';
-            let hLuna = '<td class="label">LUNA / LUZ</td>';
-            let hCalado = '<td class="label">CALADO REAL</td>';
-            let hMarea = '<td class="label">MAREA (m)</td>';
-            let hLluvia = '<td class="label">LLUVIA (mm)</td>';
-            let hOla = '<td class="label">OLA (Dir)</td>';
-            let hPer = '<td class="label">PERIODO</td>';
-            let hVnt = '<td class="label">VIENTO (kn)</td>';
-
-            horas.forEach((h, i) => {
-                const marea = (Math.sin((i + 2) * 0.5) * 1.6 + 2.0).toFixed(1);
-                const caladoReal = (parseFloat(fondoBase) + parseFloat(marea)).toFixed(1);
-                const lluvia = (Math.random() > 0.8) ? (Math.random() * 2).toFixed(1) : 0;
-                const ola = (Math.random() * 1.0 + 0.8).toFixed(1);
-                const per = Math.floor(Math.random() * 5 + 8);
-                const vnt = Math.floor(Math.random() * 10 + 5);
-
-                hHora += `<td class="bg-slate-100">${h}</td>`;
-                hLuna += `<td class="luna-celda">${faseLuna}</td>`;
-                hCalado += `<td class="bg-calado">${caladoReal}m</td>`;
-                hMarea += `<td class="text-sky-700">${marea}m</td>`;
-                hLluvia += `<td class="${lluvia > 0 ? 'lluvia-celda' : ''}">${lluvia > 0 ? lluvia : '-'}</td>`;
-                hOla += `<td class="${ola > 1.7 ? 'o-brava' : 'o-ideal'}">${ola}m ↘</td>`;
-                hPer += `<td class="${per > 11 ? 'p-peligro' : ''}">${per}s</td>`;
-                hVnt += `<td class="${vnt > 15 ? 'v-fuerte' : 'v-suave'}">${vnt} ↗</td>`;
-            });
-
-            document.getElementById('f-hora').innerHTML = hHora;
-            document.getElementById('f-luna').innerHTML = hLuna;
-            document.getElementById('f-calado').innerHTML = hCalado;
-            document.getElementById('f-marea').innerHTML = hMarea;
-            document.getElementById('f-lluvia').innerHTML = hLluvia;
-            document.getElementById('f-ola').innerHTML = hOla;
-            document.getElementById('f-per').innerHTML = hPer;
-            document.getElementById('f-vnt').innerHTML = hVnt;
-
-            // Lógica de nota inteligente
-            if(fondoBase < 3) {
-                document.getElementById('nota-pesca').innerText = "4.5";
-                document.getElementById('consejo-box').innerText = "⚠️ OJO: Calado bajo en esta zona. Con este mar el bajo puede romper demasiado.";
-            } else {
-                document.getElementById('nota-pesca').innerText = "8.7";
-                document.getElementById('consejo-box').innerText = "✅ BUENA PUESTA: Fondo suficiente y mar trabajando bien las rocas.";
-            }
+        function toggleSpots() {
+            const lista = document.getElementById('lista-favoritos');
+            lista.classList.toggle('hidden');
         }
-
-        window.onload = actualizarDatos;
     </script>
 </body>
 </html>
