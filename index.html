@@ -3,14 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SargoGuru PRO - V3.4</title>
+    <title>SargoGuru PRO - V3.6 Final</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background: #fff; margin: 0; padding-bottom: 70px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        body { background: #fff; margin: 0; padding-bottom: 70px; overflow-y: auto; -webkit-overflow-scrolling: touch; font-family: sans-serif; }
+        
+        /* MAPA */
         #map { height: 180px; width: 100%; border-bottom: 2px solid #333; }
 
+        /* TABLA CON DESPLAZAMIENTO */
         .tabla-container {
             width: 100%;
             overflow-x: auto;
@@ -20,32 +23,33 @@
         }
 
         table { border-collapse: collapse; min-width: 1200px; table-layout: fixed; }
-        td { border: 0.1px solid #ddd; height: 35px; text-align: center; font-size: 11px; font-weight: bold; width: 45px; }
+        td { border: 0.1px solid #ddd; height: 35px; text-align: center; font-size: 11px; font-weight: bold; width: 50px; }
 
-        /* COLUMNA IZQUIERDA MÁS ESTRECHA (85px) */
+        /* COLUMNA IZQUIERDA ESTRECHA Y FIJA */
         .col-fija {
             position: sticky;
             left: 0;
-            background: #f1f5f9;
-            z-index: 30;
-            width: 85px !important; /* Reducido de 120px */
+            background: #f8fafc;
+            z-index: 40;
+            width: 85px !important;
             text-align: left;
-            padding-left: 5px;
-            font-size: 9px; /* Texto un pelín más pequeño para que quepa */
-            line-height: 1;
+            padding-left: 8px;
+            font-size: 9px;
             color: #475569;
             border-right: 2px solid #cbd5e1;
+            text-transform: uppercase;
         }
 
-        /* COLORES */
-        .v-19 { background: #ffff00; } .v-15 { background: #32ff32; }
-        .r-32 { background: #ff00ff; color: #fff; } .r-28 { background: #ff3232; color: #fff; }
+        /* COLORES DE DATOS */
+        .v-19 { background: #ffff00; } 
+        .v-15 { background: #32ff32; }
+        .r-32 { background: #ff00ff; color: #fff; } 
+        .r-28 { background: #ff3232; color: #fff; }
         .o-azul { background: #ccccff; }
 
-        .fila-marea { height: 50px; vertical-align: bottom; padding: 0; position: relative; }
-        .marea-bg { position: absolute; bottom: 0; left: 0; width: 100%; }
-        .marea-sube { background: linear-gradient(to top, #f0fdf4, #4ade80); border-top: 1px solid #16a34a; }
-        .marea-baja { background: linear-gradient(to top, #fff, #fca5a5); border-top: 1px solid #dc2626; }
+        /* SECCIÓN MAREA INFERIOR */
+        .marea-box { background: #fff; border-top: 1px solid #eee; padding: 15px 0; margin-top: 10px; }
+        .marea-svg { width: 100%; height: 80px; }
     </style>
 </head>
 <body>
@@ -55,60 +59,78 @@
             <button class="bg-gray-700 px-2 py-1 rounded text-[9px] font-bold border border-gray-500 uppercase">🔍 SPOTS</button>
             <span class="text-sky-400 font-bold text-sm">Carrageiros ★</span>
         </div>
+        <div class="text-[9px] opacity-50">v3.6</div>
     </div>
 
     <div id="map"></div>
 
     <div class="tabla-container">
         <table>
-            <tr class="bg-gray-100">
-                <td class="col-fija">DÍA / HORA</td>
+            <tr class="bg-gray-50">
+                <td class="col-fija">Día / Hora</td>
                 <td>16h</td><td>18h</td><td>20h</td><td>22h</td><td>03h</td><td>06h</td><td>09h</td><td>12h</td><td>15h</td><td>18h</td><td>21h</td><td>00h</td>
             </tr>
             <tr>
-                <td class="col-fija">VIENTO (kn)</td>
+                <td class="col-fija">Viento (kn)</td>
                 <td class="v-19">19</td><td class="v-15">16</td><td class="v-15">15</td><td class="v-15">15</td><td>11</td><td>10</td><td>7</td><td>10</td><td>10</td><td>9</td><td>8</td><td>7</td>
             </tr>
             <tr>
-                <td class="col-fija">RACHAS (kn)</td>
+                <td class="col-fija">Rachas (kn)</td>
                 <td class="r-32">32</td><td class="r-28">28</td><td class="r-28">26</td><td class="r-32">30</td><td class="v-19">20</td><td class="v-19">19</td><td>16</td><td>16</td><td>16</td><td>15</td><td>14</td><td>12</td>
             </tr>
             <tr>
-                <td class="col-fija">OLA (m)</td>
+                <td class="col-fija">Ola (m)</td>
                 <td class="o-azul">2.3</td><td class="o-azul">2.3</td><td class="o-azul">2.3</td><td class="o-azul">2.3</td><td>2.0</td><td>1.9</td><td>1.8</td><td>1.7</td><td>1.7</td><td>1.6</td><td>1.5</td><td>1.4</td>
             </tr>
             <tr>
-                <td class="col-fija" style="height: 50px;">MAREA</td>
-                <td class="fila-marea"><div class="marea-bg marea-sube" style="height: 80%"></div></td>
-                <td class="fila-marea"><div class="marea-bg marea-sube" style="height: 100%"></div></td>
-                <td class="fila-marea"><div class="marea-bg marea-baja" style="height: 80%"></div></td>
-                <td class="fila-marea"><div class="marea-bg marea-baja" style="height: 50%"></div></td>
-                <td class="fila-marea"><div class="marea-bg marea-baja" style="height: 20%"></div></td>
-                <td class="fila-marea"><div class="marea-bg marea-sube" style="height: 30%"></div></td>
-                <td class="fila-marea"><div class="marea-bg marea-sube" style="height: 60%"></div></td>
-                <td class="fila-marea"><div class="marea-bg marea-sube" style="height: 90%"></div></td>
-                <td class="fila-marea"><div class="marea-bg marea-baja" style="height: 70%"></div></td>
-                <td class="fila-marea"><div class="marea-bg marea-baja" style="height: 40%"></div></td>
-                <td class="fila-marea"><div class="marea-bg marea-baja" style="height: 20%"></div></td>
-                <td class="fila-marea"><div class="marea-bg marea-sube" style="height: 40%"></div></td>
-            </tr>
-            <tr>
-                <td class="col-fija">PERIODO (s)</td>
+                <td class="col-fija">Periodo (s)</td>
                 <td>11</td><td>11</td><td>12</td><td>12</td><td>12</td><td>12</td><td>12</td><td class="bg-red-400 text-white">21</td><td>20</td><td>19</td><td>18</td><td>17</td>
             </tr>
         </table>
     </div>
 
+    <div class="marea-box">
+        <div class="px-4 flex justify-between items-center mb-2">
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Gráfico de Mareas</span>
+            <span class="text-green-600 text-[10px] font-bold flex items-center gap-1">
+                <span class="w-2 h-2 bg-green-600 rounded-full animate-pulse"></span> LLENANDO
+            </span>
+        </div>
+        <div class="relative">
+            <div class="flex justify-between text-[9px] px-10 absolute w-full font-bold text-gray-400" style="top: -5px;">
+                <span>16:45</span><span>22:45</span><span>05:00</span><span>11:10</span>
+            </div>
+            <svg class="marea-svg" viewBox="0 0 400 80" preserveAspectRatio="none">
+                <defs>
+                    <linearGradient id="gradMarea" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#4ade80;stop-opacity:0.4" />
+                        <stop offset="100%" style="stop-color:#f87171;stop-opacity:0.4" />
+                    </linearGradient>
+                </defs>
+                <path d="M 0 40 Q 50 0 100 40 Q 150 80 200 40 Q 250 0 300 40 Q 350 80 400 40 L 400 80 L 0 80 Z" fill="url(#gradMarea)" />
+                <path d="M 0 40 Q 50 0 100 40 Q 150 80 200 40 Q 250 0 300 40 Q 350 80 400 40" stroke="#334155" stroke-width="2" fill="none" />
+                <line x1="0" y1="40" x2="400" y2="40" stroke="#cbd5e1" stroke-dasharray="4" />
+            </svg>
+        </div>
+    </div>
+
     <div class="fixed bottom-0 w-full bg-[#1a1a1a] text-white flex justify-around p-2 text-[10px] font-bold z-[1500] border-t border-gray-800">
         <div class="text-center text-sky-400">★<br>Favoritos</div>
         <div class="text-center opacity-40">🗺️<br>Mapas</div>
+        <div class="text-center opacity-40">⚙️<br>Ajustes</div>
     </div>
 
     <script>
+        // Configuración del Mapa
         var map = L.map('map', {zoomControl: false}).setView([42.558, -8.995], 13);
+        
+        // Capa Satélite
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
+        
+        // Capa Nombres y Carreteras
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}').addTo(map);
-        L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png').addTo(map);
+        
+        // Marcador del Spot
         L.marker([42.558, -8.995]).addTo(map);
     </script>
 </body>
