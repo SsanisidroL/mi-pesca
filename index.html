@@ -3,173 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SargoGuru PRO - V3.1</title>
+    <title>SargoGuru PRO - V3.4</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Permitir scroll vertical en toda la página */
         body { background: #fff; margin: 0; padding-bottom: 70px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-        
         #map { height: 180px; width: 100%; border-bottom: 2px solid #333; }
 
-        /* CONTENEDOR DE LA TABLA: CLAVE PARA EL SCROLL LATERAL */
         .tabla-container {
             width: 100%;
-            overflow-x: auto; /* Habilita el desplazamiento lateral */
+            overflow-x: auto;
             position: relative;
             background: white;
-            -webkit-overflow-scrolling: touch; /* Scroll suave en iPhone */
+            -webkit-overflow-scrolling: touch;
         }
 
-        table { border-collapse: collapse; min-width: 1300px; table-layout: fixed; }
-        
-        td { 
-            border: 0.1px solid #ddd; 
-            height: 32px; 
-            text-align: center; 
-            font-size: 11px; 
-            font-weight: bold; 
-            width: 45px; 
-        }
+        table { border-collapse: collapse; min-width: 1200px; table-layout: fixed; }
+        td { border: 0.1px solid #ddd; height: 35px; text-align: center; font-size: 11px; font-weight: bold; width: 45px; }
 
-        /* LA COLUMNA IZQUIERDA AHORA ES "STICKY" (SE QUEDA PEGADA) */
+        /* COLUMNA IZQUIERDA MÁS ESTRECHA (85px) */
         .col-fija {
             position: sticky;
             left: 0;
-            background: #f1f5f9; /* Color grisáceo como la app */
+            background: #f1f5f9;
             z-index: 30;
-            width: 120px !important; /* Ancho de la etiqueta */
+            width: 85px !important; /* Reducido de 120px */
             text-align: left;
-            padding-left: 8px;
-            font-size: 9px;
+            padding-left: 5px;
+            font-size: 9px; /* Texto un pelín más pequeño para que quepa */
+            line-height: 1;
             color: #475569;
             border-right: 2px solid #cbd5e1;
         }
 
-        /* COLORES REALES DE TU CAPTURA */
-        .v-19 { background: #ffff00; } 
-        .v-15 { background: #32ff32; }
-        .r-32 { background: #ff00ff; color: #fff; } 
-        .r-28 { background: #ff3232; color: #fff; }
+        /* COLORES */
+        .v-19 { background: #ffff00; } .v-15 { background: #32ff32; }
+        .r-32 { background: #ff00ff; color: #fff; } .r-28 { background: #ff3232; color: #fff; }
         .o-azul { background: #ccccff; }
-        .p-rojo { background: #f87171; color: white; }
 
-        /* MENU SPOTS */
-        #menu-spots { 
-            display: none; position: fixed; top: 55px; left: 10px; 
-            background: #1a1a1a; color: white; z-index: 2000; width: 220px;
-            border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
+        .fila-marea { height: 50px; vertical-align: bottom; padding: 0; position: relative; }
+        .marea-bg { position: absolute; bottom: 0; left: 0; width: 100%; }
+        .marea-sube { background: linear-gradient(to top, #f0fdf4, #4ade80); border-top: 1px solid #16a34a; }
+        .marea-baja { background: linear-gradient(to top, #fff, #fca5a5); border-top: 1px solid #dc2626; }
     </style>
 </head>
 <body>
 
     <div class="bg-[#1a1a1a] text-white p-3 flex justify-between items-center sticky top-0 z-[1500]">
         <div class="flex items-center gap-2">
-            <button onclick="toggleSpots()" class="bg-gray-700 px-3 py-1 rounded text-[10px] font-bold border border-gray-500 uppercase">
-                🔍 buscar spots...
-            </button>
-            <span id="sitio-activo" class="text-sky-400 font-bold text-sm">Carrageiros ★</span>
+            <button class="bg-gray-700 px-2 py-1 rounded text-[9px] font-bold border border-gray-500 uppercase">🔍 SPOTS</button>
+            <span class="text-sky-400 font-bold text-sm">Carrageiros ★</span>
         </div>
-        <div class="text-[9px] opacity-60">SargoGuru v3.1</div>
     </div>
 
     <div id="map"></div>
 
-    <div id="menu-spots" class="p-3">
-        <div class="flex justify-between items-center mb-3 border-b border-gray-700 pb-1">
-            <span class="text-[10px] text-gray-500 uppercase font-bold">Mis Favoritos</span>
-            <button onclick="toggleSpots()" class="text-xs">✕</button>
-        </div>
-        <div class="flex flex-col gap-1">
-            <button onclick="irASpot(42.558, -8.995, 'Spain - Carrageiros')" class="text-left p-3 hover:bg-gray-800 rounded text-sm border-b border-gray-800">★ Carrageiros</button>
-            <button onclick="irASpot(42.576, -9.045, 'Spain - Corrubedo')" class="text-left p-3 hover:bg-gray-800 rounded text-sm border-b border-gray-800">★ Corrubedo</button>
-            <button onclick="irASpot(42.548, -9.010, 'Spain - Aguiño')" class="text-left p-3 hover:bg-gray-800 rounded text-sm border-b border-gray-800">★ Aguiño (Puerto)</button>
-        </div>
-    </div>
-
     <div class="tabla-container">
         <table>
             <tr class="bg-gray-100">
-                <td class="col-fija">Updated: 18.2. 20:47</td>
+                <td class="col-fija">DÍA / HORA</td>
                 <td>16h</td><td>18h</td><td>20h</td><td>22h</td><td>03h</td><td>06h</td><td>09h</td><td>12h</td><td>15h</td><td>18h</td><td>21h</td><td>00h</td>
             </tr>
             <tr>
-                <td class="col-fija">Velocidad viento (kn)</td>
+                <td class="col-fija">VIENTO (kn)</td>
                 <td class="v-19">19</td><td class="v-15">16</td><td class="v-15">15</td><td class="v-15">15</td><td>11</td><td>10</td><td>7</td><td>10</td><td>10</td><td>9</td><td>8</td><td>7</td>
             </tr>
             <tr>
-                <td class="col-fija">Rachas (kn)</td>
+                <td class="col-fija">RACHAS (kn)</td>
                 <td class="r-32">32</td><td class="r-28">28</td><td class="r-28">26</td><td class="r-32">30</td><td class="v-19">20</td><td class="v-19">19</td><td>16</td><td>16</td><td>16</td><td>15</td><td>14</td><td>12</td>
             </tr>
             <tr>
-                <td class="col-fija">Dirección viento</td>
-                <td>➡</td><td>➡</td><td>➡</td><td>➡</td><td>↘</td><td>↘</td><td>↘</td><td>↘</td><td>➔</td><td>➔</td><td>➔</td><td>➔</td>
-            </tr>
-            <tr>
-                <td class="col-fija">Ola (m)</td>
+                <td class="col-fija">OLA (m)</td>
                 <td class="o-azul">2.3</td><td class="o-azul">2.3</td><td class="o-azul">2.3</td><td class="o-azul">2.3</td><td>2.0</td><td>1.9</td><td>1.8</td><td>1.7</td><td>1.7</td><td>1.6</td><td>1.5</td><td>1.4</td>
             </tr>
             <tr>
-                <td class="col-fija">*Periodo olas (s)</td>
-                <td>11</td><td>11</td><td>12</td><td>12</td><td>12</td><td>12</td><td>12</td><td class="p-rojo">21</td><td class="p-rojo">20</td><td>19</td><td>18</td><td>17</td>
+                <td class="col-fija" style="height: 50px;">MAREA</td>
+                <td class="fila-marea"><div class="marea-bg marea-sube" style="height: 80%"></div></td>
+                <td class="fila-marea"><div class="marea-bg marea-sube" style="height: 100%"></div></td>
+                <td class="fila-marea"><div class="marea-bg marea-baja" style="height: 80%"></div></td>
+                <td class="fila-marea"><div class="marea-bg marea-baja" style="height: 50%"></div></td>
+                <td class="fila-marea"><div class="marea-bg marea-baja" style="height: 20%"></div></td>
+                <td class="fila-marea"><div class="marea-bg marea-sube" style="height: 30%"></div></td>
+                <td class="fila-marea"><div class="marea-bg marea-sube" style="height: 60%"></div></td>
+                <td class="fila-marea"><div class="marea-bg marea-sube" style="height: 90%"></div></td>
+                <td class="fila-marea"><div class="marea-bg marea-baja" style="height: 70%"></div></td>
+                <td class="fila-marea"><div class="marea-bg marea-baja" style="height: 40%"></div></td>
+                <td class="fila-marea"><div class="marea-bg marea-baja" style="height: 20%"></div></td>
+                <td class="fila-marea"><div class="marea-bg marea-sube" style="height: 40%"></div></td>
+            </tr>
+            <tr>
+                <td class="col-fija">PERIODO (s)</td>
+                <td>11</td><td>11</td><td>12</td><td>12</td><td>12</td><td>12</td><td>12</td><td class="bg-red-400 text-white">21</td><td>20</td><td>19</td><td>18</td><td>17</td>
             </tr>
         </table>
     </div>
 
-    <div class="p-4 bg-white mt-4 border-t">
-        <div class="flex justify-between items-center mb-2">
-            <span class="text-[10px] font-bold text-gray-400 uppercase">Gráfico de Mareas</span>
-            <span class="text-green-600 text-[10px] font-bold">● LLENANDO</span>
-        </div>
-        <div class="h-20 w-full flex items-end gap-1">
-            <div class="flex-1 bg-red-400" style="height: 80%"></div>
-            <div class="flex-1 bg-red-300" style="height: 50%"></div>
-            <div class="flex-1 bg-green-200" style="height: 30%"></div>
-            <div class="flex-1 bg-green-400" style="height: 60%"></div>
-            <div class="flex-1 bg-green-600" style="height: 100%"></div>
-            <div class="flex-1 bg-green-400" style="height: 70%"></div>
-        </div>
-        <div class="flex justify-between text-[10px] font-bold mt-2 text-gray-500 italic">
-            <span>22:45 BAJA</span>
-            <span>05:00 ALTA</span>
-        </div>
-    </div>
-
     <div class="fixed bottom-0 w-full bg-[#1a1a1a] text-white flex justify-around p-2 text-[10px] font-bold z-[1500] border-t border-gray-800">
-        <div class="text-center opacity-40">🔍<br>Search</div>
         <div class="text-center text-sky-400">★<br>Favoritos</div>
         <div class="text-center opacity-40">🗺️<br>Mapas</div>
-        <div class="text-center opacity-40">⚙️<br>Opciones</div>
     </div>
 
     <script>
-        // Inicializar mapa
         var map = L.map('map', {zoomControl: false}).setView([42.558, -8.995], 13);
-        
-        // 1. Capa de Satélite
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
-        
-        // 2. NUEVA CAPA: Nombres de sitios y etiquetas de tierra (Híbrido)
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}').addTo(map);
-        
-        // 3. Capa de Marcas Marítimas
         L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png').addTo(map);
-        
-        var marker = L.marker([42.558, -8.995]).addTo(map);
-
-        function toggleSpots() {
-            const m = document.getElementById('menu-spots');
-            m.style.display = (m.style.display === 'block') ? 'none' : 'block';
-        }
-
-        function irASpot(lat, lng, nombre) {
-            map.flyTo([lat, lng], 14);
-            marker.setLatLng([lat, lng]);
-            document.getElementById('sitio-activo').innerText = nombre + " ★";
-            toggleSpots(); 
-        }
+        L.marker([42.558, -8.995]).addTo(map);
     </script>
 </body>
 </html>
