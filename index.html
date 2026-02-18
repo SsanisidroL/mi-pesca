@@ -3,119 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SargoGuru - Windguru Clone</title>
+    <title>SargoGuru - Estilo Real</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #f3f4f6; font-family: Arial, sans-serif; margin-bottom: 60px; }
+        body { background-color: #f3f4f6; font-family: Arial, sans-serif; padding-bottom: 50px; }
         
-        /* CONTENEDOR CON SCROLL LATERAL */
-        .wrapper { position: relative; overflow: hidden; border: 1px solid #ccc; background: white; }
-        .scroll-area { overflow-x: auto; margin-left: 110px; /* Ancho de la columna fija */ }
+        /* ESTILOS DE LA TABLA WINDGURU */
+        .tabla-contenedor {
+            overflow-x: auto;
+            position: relative;
+            background: white;
+        }
         
-        .tab-guru { border-collapse: collapse; min-width: 1200px; font-size: 11px; text-align: center; }
-        .tab-guru td { border: 0.1px solid #ddd; height: 26px; font-weight: bold; width: 45px; }
-
-        /* COLUMNA IZQUIERDA FIJA */
-        .label-fix { 
-            position: absolute; left: 0; width: 110px; background: #f8f8f8; 
-            font-size: 9px; color: #555; text-align: left; padding-left: 5px;
-            display: flex; align-items: center; border-right: 2px solid #ddd; z-index: 10;
+        table {
+            border-collapse: collapse;
+            min-width: 1400px; /* Ancho forzado para que haya scroll */
+            font-size: 11px;
+            text-align: center;
         }
 
-        /* COLORES SEGÚN TUS FOTOS */
-        .v-verde { background: #4df04d; } .v-amar { background: #f0f030; }
-        .r-rojo { background: #f03030; color: white; } .r-rosa { background: #f030f0; color: white; }
-        .o-azul { background: #a0a0f0; } .p-alerta { background: #f04040; color: white; }
+        td, th {
+            border: 1px solid #ccc;
+            height: 24px;
+            width: 45px;
+            padding: 2px;
+        }
+
+        /* COLUMNA FIJA (STICKY) */
+        .fija {
+            position: sticky;
+            left: 0;
+            background-color: #f4f4f4;
+            z-index: 10;
+            width: 130px;
+            text-align: left;
+            padding-left: 5px;
+            font-weight: bold;
+            color: #444;
+            border-right: 2px solid #bbb;
+        }
+
+        /* COLORES DE VIENTO (Exactos de la foto) */
+        .v-suave { background: #affcaf; } /* Verde claro */
+        .v-medio { background: #6df56d; } /* Verde fuerte */
+        .v-alerta { background: #ffff66; } /* Amarillo */
+        .r-fuerte { background: #ff4d4d; color: white; font-weight: bold; } /* Rojo */
+        .r-extremo { background: #ff00ff; color: white; font-weight: bold; } /* Rosa (32kn) */
         
+        /* OLA */
+        .ola-azul { background: #aabbee; } 
+        .per-rojo { background: #ff6666; color: white; }
+
         /* GRÁFICO MAREA */
-        .marea-box { height: 60px; display: flex; align-items: flex-end; background: #eee; padding: 5px; gap: 1px; }
-        .bar { flex: 1; }
-        .up { background: linear-gradient(to top, #fff, #4ade80); border-top: 2px solid green; }
-        .down { background: linear-gradient(to top, #fff, #f87171); border-top: 2px solid red; }
+        .marea-box { display: flex; align-items: flex-end; height: 50px; background: #eee; gap: 1px; padding: 2px; border-top: 1px solid #ccc; }
+        .barra { flex: 1; }
+        .sube { background: linear-gradient(to top, #fff, #22c55e); border-top: 2px solid #16a34a; }
+        .baja { background: linear-gradient(to top, #fff, #ef4444); border-top: 2px solid #dc2626; }
+
     </style>
 </head>
 <body>
 
-    <div class="bg-[#222] text-white p-2 flex justify-between items-center text-sm">
-        <div class="flex items-center gap-2">
-            <button onclick="toggleSpots()" class="bg-[#444] px-2 py-1 rounded text-[10px] border border-gray-600">
-                🔍 buscar spots...
+    <div class="bg-[#333] text-white p-2 flex justify-between items-center text-sm relative z-50">
+        <div class="flex items-center gap-3">
+            <button onclick="verFavoritos()" class="flex items-center gap-1 bg-[#555] px-2 py-1 rounded border border-[#777]">
+                <span class="text-xl">☰</span>
+                <span class="text-[10px] uppercase font-bold">Buscar spots...</span>
             </button>
-            <span class="font-bold text-sky-400">Carrageiros ★</span>
+            
+            <div class="font-bold text-sky-400 text-sm">
+                Spain - Carrageiros ★
+            </div>
         </div>
-        <div class="flex gap-2 text-[9px] opacity-80">
-            <span>☀️ 08:31</span><span>🌙 20:31</span>
-        </div>
-    </div>
-
-    <div id="lista-favoritos" class="hidden bg-white border-b-2 border-black p-4 text-sm font-bold">
-        <p class="text-gray-400 text-[10px] mb-2">MIS FAVORITOS:</p>
-        <div class="grid grid-cols-2 gap-2">
-            <button class="bg-gray-100 p-2 rounded">★ Carrageiros</button>
-            <button class="bg-gray-100 p-2 rounded">★ Corrubedo</button>
-            <button class="bg-gray-100 p-2 rounded">★ Aguiño</button>
+        
+        <div class="text-[9px] opacity-80 hidden sm:block">
+            ☀️ 08:31 - 19:07 &nbsp; 🌙 08:57
         </div>
     </div>
 
-    <div class="wrapper mt-2">
-        <div class="absolute top-0 left-0 z-20">
-            <div class="label-fix" style="top:0px; height:26px">FECHA</div>
-            <div class="label-fix" style="top:26px; height:26px">VIENTO (kn)</div>
-            <div class="label-fix" style="top:52px; height:26px">RACHAS (kn)</div>
-            <div class="label-fix" style="top:78px; height:26px">DIR. VIENTO</div>
-            <div class="label-fix" style="top:104px; height:26px">OLA (m)</div>
-            <div class="label-fix" style="top:130px; height:26px">PERIODO (s)</div>
-        </div>
-
-        <div class="scroll-area">
-            <table class="tab-guru">
-                <tr class="bg-gray-100">
-                    <td>18. 16h</td><td>18. 18h</td><td>18. 20h</td><td>18. 22h</td><td>19. 03h</td><td>19. 06h</td><td>19. 09h</td><td>19. 12h</td><td>19. 15h</td><td>19. 18h</td>
-                </tr>
-                <tr>
-                    <td class="v-amar">19</td><td class="v-verde">16</td><td class="v-verde">15</td><td class="v-verde">15</td><td>11</td><td>10</td><td>7</td><td>10</td><td>10</td><td>9</td>
-                </tr>
-                <tr>
-                    <td class="r-rosa">32</td><td class="r-rojo">28</td><td class="r-rojo">26</td><td class="r-rosa">30</td><td class="v-amar">20</td><td class="v-amar">19</td><td class="v-verde">16</td><td>16</td><td>16</td><td>15</td>
-                </tr>
-                <tr>
-                    <td>➔</td><td>➔</td><td>➔</td><td>➔</td><td>↘</td><td>↘</td><td>↘</td><td>➔</td><td>➔</td><td>➔</td>
-                </tr>
-                <tr>
-                    <td class="o-azul">2.3</td><td class="o-azul">2.3</td><td class="o-azul">2.3</td><td class="o-azul">2.3</td><td>2.0</td><td>1.9</td><td>1.8</td><td>1.7</td><td>1.7</td><td>1.6</td>
-                </tr>
-                <tr>
-                    <td>11</td><td>11</td><td>12</td><td>12</td><td>12</td><td>12</td><td>12</td><td class="p-alerta">20</td><td class="p-alerta">20</td><td class="p-alerta">19</td>
-                </tr>
-            </table>
-        </div>
+    <div id="menu-favs" class="hidden bg-[#222] text-white p-2 border-t border-[#555]">
+        <p class="text-[10px] text-gray-400 mb-2 uppercase">Mis Sitios Guardados:</p>
+        <ul class="space-y-2 text-sm">
+            <li class="p-2 bg-[#444] rounded cursor-pointer hover:bg-[#555]">★ Spain - Carrageiros</li>
+            <li class="p-2 bg-[#444] rounded cursor-pointer hover:bg-[#555]">★ Spain - Corrubedo</li>
+            <li class="p-2 bg-[#444] rounded cursor-pointer hover:bg-[#555]">★ Spain - Aguiño (Puerto)</li>
+            <li class="p-2 bg-[#444] rounded cursor-pointer hover:bg-[#555]">★ Spain - Touro</li>
+        </ul>
     </div>
 
-    <div class="bg-white p-2 border-t mt-2">
-        <div class="flex justify-between items-center mb-2">
-            <span class="text-[10px] font-bold text-gray-500 uppercase italic">Gráfico de Mareas</span>
-            <span class="text-[9px] text-green-600 font-bold">11:45 PM ↑ ALTA</span>
+    <div class="tabla-contenedor">
+        <table>
+            <tr class="bg-gray-100 text-[10px] text-gray-600">
+                <td class="fija">Updated: 18.02 20:47</td>
+                <td>16h</td><td>18h</td><td>20h</td><td>22h</td>
+                <td>03h</td><td>06h</td><td>09h</td><td>12h</td>
+                <td>15h</td><td>18h</td><td>21h</td><td>00h</td>
+            </tr>
+
+            <tr>
+                <td class="fija">Velocidad viento (kn)</td>
+                <td class="v-alerta">19</td> <td class="v-medio">16</td> <td class="v-medio">15</td> <td class="v-medio">15</td>
+                <td class="v-suave">11</td> <td class="v-suave">10</td> <td class="v-suave">7</td> <td class="v-suave">7</td>
+                <td class="v-suave">10</td> <td class="v-suave">10</td> <td class="v-suave">9</td> <td class="v-suave">8</td>
+            </tr>
+
+            <tr>
+                <td class="fija">Rachas (kn)</td>
+                <td class="r-extremo">32</td> <td class="r-fuerte">28</td> <td class="r-fuerte">26</td> <td class="r-extremo">30</td>
+                <td class="v-alerta">20</td> <td class="v-alerta">19</td> <td class="v-medio">16</td> <td class="v-medio">14</td>
+                <td class="v-medio">16</td> <td class="v-medio">16</td> <td class="v-medio">15</td> <td class="v-medio">14</td>
+            </tr>
+
+            <tr>
+                <td class="fija">Dirección viento</td>
+                <td>➡</td><td>➡</td><td>➡</td><td>➡</td>
+                <td>↘</td><td>↘</td><td>↘</td><td>↘</td>
+                <td>↘</td><td>↘</td><td>↘</td><td>↘</td>
+            </tr>
+
+            <tr>
+                <td class="fija">Ola (m)</td>
+                <td class="ola-azul">2.3</td> <td class="ola-azul">2.3</td> <td class="ola-azul">2.3</td> <td class="ola-azul">2.3</td>
+                <td class="ola-azul">2.0</td> <td class="ola-azul">1.9</td> <td class="ola-azul">1.8</td> <td class="ola-azul">1.7</td>
+                <td class="ola-azul">1.7</td> <td class="ola-azul">1.6</td> <td class="ola-azul">1.5</td> <td class="ola-azul">1.4</td>
+            </tr>
+
+            <tr>
+                <td class="fija">*Periodo olas (s)</td>
+                <td>11</td> <td>11</td> <td>12</td> <td>12</td>
+                <td>12</td> <td>12</td> <td>12</td> <td>12</td>
+                <td>12</td> <td>12</td> <td>12</td> <td>12</td>
+            </tr>
+
+             <tr>
+                <td class="fija">*Temperatura (ºC)</td>
+                <td class="bg-yellow-200">12</td> <td class="bg-yellow-200">12</td> <td class="bg-yellow-200">11</td> <td class="bg-yellow-100">10</td>
+                <td class="bg-yellow-100">10</td> <td class="bg-yellow-100">11</td> <td class="bg-yellow-100">10</td> <td class="bg-yellow-200">11</td>
+                <td class="bg-yellow-200">12</td> <td class="bg-yellow-200">12</td> <td class="bg-yellow-200">13</td> <td class="bg-yellow-200">12</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="bg-white mt-2 border-t border-gray-300">
+        <div class="flex justify-between px-2 py-1 text-[10px] font-bold text-gray-500">
+            <span>Mareas</span>
+            <span class="text-green-600">Próxima: 22:45 BAJA</span>
         </div>
         <div class="marea-box">
-            <div class="bar down" style="height: 80%"></div><div class="bar down" style="height: 60%"></div>
-            <div class="bar down" style="height: 30%"></div><div class="bar up" style="height: 20%"></div>
-            <div class="bar up" style="height: 50%"></div><div class="bar up" style="height: 80%"></div>
-            <div class="bar up" style="height: 100%"></div><div class="bar down" style="height: 70%"></div>
+            <div class="barra baja" style="height: 90%"></div> <div class="barra baja" style="height: 70%"></div>
+            <div class="barra baja" style="height: 50%"></div> <div class="barra baja" style="height: 30%"></div>
+            <div class="barra sube" style="height: 20%"></div> <div class="barra sube" style="height: 40%"></div>
+            <div class="barra sube" style="height: 60%"></div> <div class="barra sube" style="height: 80%"></div>
+            <div class="barra sube" style="height: 90%"></div> <div class="barra baja" style="height: 80%"></div>
+            <div class="barra baja" style="height: 60%"></div> <div class="barra baja" style="height: 40%"></div>
+        </div>
+        <div class="flex justify-between px-4 text-[9px] font-bold mt-1">
+            <span>16:45</span>
+            <span>22:45</span>
+            <span>05:00</span>
+            <span>11:10</span>
         </div>
     </div>
 
-    <div class="fixed bottom-0 w-full bg-[#222] text-white flex justify-around p-2 text-[9px] uppercase font-bold border-t border-gray-700">
-        <div class="text-center opacity-60">🔍<br>Search</div>
-        <div class="text-center text-sky-400">★<br>Favoritos</div>
-        <div class="text-center opacity-60">🗺️<br>Mapas</div>
-        <div class="text-center opacity-60">⚙️<br>Opciones</div>
+    <div class="fixed bottom-0 w-full bg-[#222] text-white flex justify-around py-2 text-[9px] uppercase font-bold border-t border-[#444] z-50">
+        <div class="text-center opacity-70">🔍<br>Search</div>
+        <div class="text-center text-white">★<br>Favoritos</div>
+        <div class="text-center opacity-70">🗺️<br>Mapas</div>
+        <div class="text-center opacity-70">⚙️<br>Opciones</div>
     </div>
 
     <script>
-        function toggleSpots() {
-            const lista = document.getElementById('lista-favoritos');
-            lista.classList.toggle('hidden');
+        // Función para abrir/cerrar menú de favoritos
+        function verFavoritos() {
+            var menu = document.getElementById("menu-favs");
+            if (menu.classList.contains("hidden")) {
+                menu.classList.remove("hidden");
+            } else {
+                menu.classList.add("hidden");
+            }
         }
     </script>
+
 </body>
 </html>
