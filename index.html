@@ -3,84 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Plano de Pesca</title>
+    <title>SargoGuru Total</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .alerta-roja { color: #ff4444; font-weight: bold; background: rgba(255,0,0,0.1); }
-        .ideal { color: #44ff44; font-weight: bold; }
-        .tabla-guru { border-collapse: collapse; width: 100%; text-align: center; background: #1e293b; }
-        th, td { border: 1px solid #334155; padding: 10px; }
+        table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+        td { border: 0.1px solid #ddd; text-align: center; font-size: 13px; height: 35px; font-weight: bold; }
+        .label { background: #f1f5f9; font-size: 10px; color: #64748b; font-weight: bold; width: 65px; text-align: left; padding-left: 4px; }
+        
+        /* COLORES GURU */
+        .v-1 { background-color: #ffffff; } .v-2 { background-color: #90ee90; } .v-4 { background-color: #ffa500; color: #fff; }
+        .o-1 { background-color: #add8e6; } .o-2 { background-color: #4169e1; color: #fff; } .o-3 { background-color: #00008b; color: #fff; }
+        .p-1 { background-color: #e0ffff; } .p-rojo { background-color: #ff0000; color: #fff; }
     </style>
 </head>
-<body class="bg-slate-900 text-white font-sans">
+<body class="bg-gray-100 font-sans">
 
-    <div class="p-4 bg-slate-800 text-center border-b border-blue-500 shadow-lg">
-        <h1 class="text-xl font-bold text-blue-400 tracking-wider">MI PLANO DE PESCA</h1>
-        <p class="text-xs text-slate-400">Datos Limpios para Sargo</p>
+    <div class="bg-slate-900 p-3 shadow-2xl">
+        <div class="flex gap-2 mb-3">
+            <input id="input-busqueda" type="text" placeholder="Busca zona (ej: Corrubedo)" class="flex-1 px-3 py-2 rounded text-sm outline-none">
+            <button onclick="buscarZona()" class="bg-blue-600 text-white px-4 py-2 rounded font-bold text-sm">IR</button>
+        </div>
+        <div class="flex gap-2 overflow-x-auto pb-1 text-[10px]">
+            <button onclick="cambiarZona('Arousa', 42.55, -8.95)" class="bg-slate-700 text-white px-3 py-1 rounded">AROSA</button>
+            <button onclick="cambiarZona('Muros', 42.75, -9.05)" class="bg-slate-700 text-white px-3 py-1 rounded">MUROS</button>
+            <button onclick="cambiarZona('Vigo', 42.23, -8.80)" class="bg-slate-700 text-white px-3 py-1 rounded">VIGO</button>
+            <button onclick="miUbicacion()" class="bg-green-600 text-white px-3 py-1 rounded font-bold">📍 MI ZONA</button>
+        </div>
     </div>
 
-    <div class="flex justify-around p-3 bg-slate-800 sticky top-0 z-10 shadow-md">
-        <button onclick="cambiarZona('Arousa', 42.55, -8.95)" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg font-bold text-sm transition">AROSA</button>
-        <button onclick="cambiarZona('Muros', 42.75, -9.05)" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg font-bold text-sm transition">MUROS</button>
-        <button onclick="cambiarZona('Vigo', 42.23, -8.80)" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg font-bold text-sm transition">VIGO</button>
+    <div class="w-full h-56 bg-black border-b border-slate-400">
+        <iframe id="mapa" width="100%" height="100%" frameborder="0" src=""></iframe>
     </div>
 
-    <div class="w-full h-72 bg-black border-b border-slate-700">
-        <iframe id="mapa" width="100%" height="100%" frameborder="0" style="filter: contrast(1.2) saturate(1.2);" src=""></iframe>
-    </div>
-
-    <div class="p-3 overflow-x-auto">
-        <h2 class="text-sm font-bold text-blue-300 mb-2 uppercase italic">Previsión del día:</h2>
-        <table class="tabla-guru text-sm rounded-lg overflow-hidden">
-            <thead>
-                <tr class="bg-slate-700 text-slate-200">
-                    <th>Hora</th>
-                    <th>Ola</th>
-                    <th>Per.</th>
-                    <th>Viento</th>
-                    <th>Pesca</th>
-                </tr>
-            </thead>
-            <tbody id="datos-tabla" class="divide-y divide-slate-700">
-                </tbody>
+    <div class="m-2 shadow-lg bg-white overflow-hidden rounded">
+        <table>
+            <tr id="fila-hora"></tr>
+            <tr id="fila-ola"></tr>
+            <tr id="fila-per"></tr>
+            <tr id="fila-vnt"></tr>
         </table>
     </div>
 
-    <div id="consejo-experto" class="m-4 p-4 bg-blue-900/40 border-l-4 border-blue-500 rounded text-sm italic text-blue-100 shadow-inner">
-        Pulsa una ría para analizar el mar.
+    <div class="p-4 text-center">
+        <p id="nombre-ubicacion" class="text-xs font-bold text-slate-500 uppercase tracking-widest">Analizando Costa...</p>
     </div>
 
     <script>
         function cambiarZona(nombre, lat, lon) {
-            // Carga Google Maps en modo Satélite (k)
-            document.getElementById('mapa').src = `https://maps.google.com/maps?q=${lat},${lon}&t=k&z=13&ie=UTF8&iwloc=&output=embed`;
-            
-            const tbody = document.getElementById('datos-tabla');
-            tbody.innerHTML = '';
-            
-            const horas = ["08:00", "12:00", "16:00", "20:00"];
-            horas.forEach(h => {
-                const ola = (Math.random() * 1.2 + 0.8).toFixed(1);
-                const per = Math.floor(Math.random() * 6 + 7);
-                const viento = Math.floor(Math.random() * 15 + 10);
-                
-                let clasePer = per > 11 ? 'alerta-roja' : 'ideal';
-                let recomendacion = per > 11 ? '⚠️ CALADO' : '✅ ARRIMA';
+            document.getElementById('nombre-ubicacion').innerText = "Coordenadas: " + lat + " / " + lon;
+            document.getElementById('mapa').src = `https://maps.google.com/maps?q=${lat},${lon}&t=k&z=14&ie=UTF8&iwloc=&output=embed`;
+            actualizarTabla();
+        }
 
-                tbody.innerHTML += `
-                    <tr>
-                        <td class="font-bold bg-slate-800/50">${h}</td>
-                        <td>${ola}m</td>
-                        <td class="${clasePer}">${per}s</td>
-                        <td>${viento}kn</td>
-                        <td class="text-xs font-semibold">${recomendacion}</td>
-                    </tr>`;
+        function buscarZona() {
+            const zona = document.getElementById('input-busqueda').value;
+            if(zona) {
+                document.getElementById('nombre-ubicacion').innerText = "Buscando: " + zona;
+                document.getElementById('mapa').src = `https://maps.google.com/maps?q=${zona}&t=k&z=14&ie=UTF8&iwloc=&output=embed`;
+                actualizarTabla();
+            }
+        }
+
+        function miUbicacion() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    cambiarZona('Mi Posición', pos.coords.latitude, pos.coords.longitude);
+                });
+            }
+        }
+
+        function actualizarTabla() {
+            const horas = ["09", "12", "15", "18", "21"];
+            document.getElementById('fila-hora').innerHTML = '<td class="label">HORA</td>' + horas.map(h => `<td class="bg-slate-100">${h}h</td>`).join('');
+            
+            let htmlOla = '<td class="label">OLA (m)</td>';
+            let htmlPer = '<td class="label">PER (s)</td>';
+            let htmlVnt = '<td class="label">VNT (kn)</td>';
+
+            horas.forEach(() => {
+                const ola = (Math.random() * 1.5 + 0.5).toFixed(1);
+                const per = Math.floor(Math.random() * 8 + 6);
+                const vnt = Math.floor(Math.random() * 20);
+
+                let clO = ola < 1 ? 'o-1' : (ola < 1.7 ? 'o-2' : 'o-3');
+                let clP = per > 11 ? 'p-rojo' : 'p-1';
+                let clV = vnt < 6 ? 'v-1' : (vnt < 14 ? 'v-2' : 'v-4');
+
+                htmlOla += `<td class="${clO}">${ola}</td>`;
+                htmlPer += `<td class="${clP}">${per}</td>`;
+                htmlVnt += `<td class="${clV}">${vnt}</td>`;
             });
 
-            document.getElementById('consejo-experto').innerHTML = `💡 <strong>Plan para ${nombre}:</strong> Según las reglas de La Ruta Del Sargo, hoy con este periodo busca zonas de abrigo y ten cuidado con los trancazos si sube de 11s.`;
+            document.getElementById('fila-ola').innerHTML = htmlOla;
+            document.getElementById('fila-per').innerHTML = htmlPer;
+            document.getElementById('fila-vnt').innerHTML = htmlVnt;
         }
-        
-        // Empezar con Arousa por defecto
+
         window.onload = () => cambiarZona('Arousa', 42.55, -8.95);
     </script>
 </body>
