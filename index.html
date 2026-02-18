@@ -3,126 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SargoGuru ULTRA - 24H Detalle</title>
+    <title>SargoGuru CARTA NÁUTICA</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* TABLA TIPO GURU CON SCROLL */
+        #map { height: 350px; width: 100%; border-bottom: 3px solid #075985; }
         .contenedor-tabla { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        table { border-collapse: collapse; min-width: 600px; table-layout: fixed; background: #fff; }
-        td { border: 0.1px solid #e2e8f0; text-align: center; font-size: 11px; height: 35px; font-weight: bold; width: 50px; }
+        table { border-collapse: collapse; min-width: 1800px; table-layout: fixed; background: #fff; }
+        td { border: 0.1px solid #e2e8f0; text-align: center; font-size: 10px; height: 40px; font-weight: bold; width: 70px; }
         .label { 
-            position: sticky; left: 0; z-index: 10;
-            background: #1e293b; color: #f8fafc; font-size: 9px; 
-            text-transform: uppercase; width: 75px; text-align: left; padding-left: 6px; 
+            position: sticky; left: 0; z-index: 100; background: #0c4a6e; color: #f0f9ff; 
+            font-size: 8px; text-transform: uppercase; width: 110px; text-align: left; padding-left: 8px; border-right: 3px solid #0ea5e9;
         }
-        
-        /* COLORES WINDGURU */
-        .v-calma { background: #ffffff; color: #000; }
-        .v-suave { background: #90ee90; color: #000; }
-        .v-fuerte { background: #ffa500; color: #fff; }
-        .o-baixa { background: #add8e6; color: #000; }
+        .bg-calado { background-color: #082f49; color: #7dd3fc; }
         .o-ideal { background: #4169e1; color: #fff; }
-        .o-brava { background: #00008b; color: #fff; }
         .p-peligro { background: #ff0000; color: #fff; animation: blink 1.5s infinite; }
-        
-        @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.5;} 100% {opacity: 1;} }
-        .marea-subiendo { color: #059669; }
-        .marea-bajando { color: #dc2626; }
+        @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.6;} 100% {opacity: 1;} }
     </style>
 </head>
-<body class="bg-slate-200 font-sans">
+<body class="bg-slate-100">
 
-    <div class="bg-slate-900 p-4 shadow-xl text-center">
-        <h1 class="text-blue-400 font-black text-xl italic leading-none">SARGOGURU ULTRA</h1>
-        <p class="text-slate-500 text-[9px] uppercase tracking-widest mt-1">Previsión 24 Horas • Detalle Total</p>
-    </div>
-
-    <div class="bg-slate-900 px-4 pb-4">
-        <div class="flex gap-2">
-            <input id="input-busqueda" type="text" placeholder="Buscar zona..." class="flex-1 px-4 py-2 rounded-lg bg-slate-800 text-white text-sm border border-slate-700 outline-none">
-            <button onclick="buscarZona()" class="bg-blue-600 text-white px-5 py-2 rounded-lg font-bold text-sm">IR</button>
+    <div class="bg-sky-950 p-4 shadow-xl flex justify-between items-center text-white">
+        <div>
+            <h1 class="text-sky-400 font-black text-xl italic leading-none uppercase">Carta Náutica Pro</h1>
+            <p class="text-[9px] uppercase tracking-widest opacity-80 mt-1">Batimetría y Ayudas a la Navegación</p>
+        </div>
+        <div class="bg-sky-900 px-3 py-1 rounded border border-sky-700">
+            <span id="coord-display" class="text-[9px] font-mono text-sky-300">ZONA: GALICIA</span>
         </div>
     </div>
 
-    <div class="w-full h-56 bg-slate-800 relative">
-        <iframe id="mapa" width="100%" height="100%" frameborder="0" src=""></iframe>
-        <button onclick="miUbicacion()" class="absolute bottom-4 right-4 bg-white/90 p-3 rounded-full shadow-lg">📍</button>
-    </div>
+    <div id="map"></div>
 
-    <p class="text-[9px] text-slate-400 font-bold ml-2 mt-2 italic">↔️ Desliza para ver más horas</p>
-    <div class="m-2 bg-white rounded-xl shadow-2xl overflow-hidden border border-slate-300 contenedor-tabla">
+    <div class="m-2 bg-white rounded-xl shadow-2xl overflow-hidden contenedor-tabla border border-slate-300">
         <table>
             <tr id="f-hora"></tr>
+            <tr id="f-calado"></tr>
             <tr id="f-marea"></tr>
             <tr id="f-ola"></tr>
             <tr id="f-per"></tr>
-            <tr id="f-dir-ola"></tr>
             <tr id="f-vnt"></tr>
-            <tr id="f-dir-vnt"></tr>
         </table>
     </div>
 
-    <div class="m-2 p-4 bg-white rounded-xl border-l-8 border-blue-600 shadow-md flex justify-between items-center">
-        <div>
-            <h3 class="text-slate-500 text-[10px] font-bold uppercase">Estado para la Boya</h3>
-            <p id="consejo-texto" class="text-xs text-slate-800 font-medium mt-1 italic italic">Cargando datos...</p>
-        </div>
-        <div class="text-center min-w-[50px]">
-            <span id="nota-pesca" class="text-2xl font-black text-blue-700">--</span>
+    <div class="p-4 mx-2 bg-sky-50 rounded-lg border border-sky-200 shadow-inner">
+        <h3 class="text-sky-900 font-bold text-xs uppercase mb-1">Leyenda de la Carta:</h3>
+        <div class="grid grid-cols-2 gap-2 text-[9px] text-sky-700">
+            <p>⚓ <b>Números:</b> Profundidad en bajamar (metros).</p>
+            <p>🚩 <b>Iconos:</b> Boyas, balizas y faros reales.</p>
         </div>
     </div>
 
     <script>
-        function actualizarParrilla() {
-            // AHORA TENEMOS 8 BLOQUES DE TIEMPO (CADA 3 HORAS)
-            const horas = ["03h", "06h", "09h", "12h", "15h", "18h", "21h", "00h"];
+        // 1. Inicializar mapa
+        var map = L.map('map').setView([42.55, -8.95], 13);
+
+        // 2. Capa base (Híbrida: Satélite + Calles suaves)
+        var satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+        
+        // 3. CAPA NÁUTICA (OpenSeaMap)
+        var nautical = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
+            attribution: 'Map data &copy; OpenSeaMap contributors'
+        });
+
+        // Añadimos ambas: el satélite abajo y la carta náutica encima (transparente)
+        satellite.addTo(map);
+        nautical.addTo(map);
+
+        var marcador;
+        var fondoBase = 5.0;
+
+        map.on('click', e => {
+            if (marcador) { marcador.setLatLng(e.latlng); } 
+            else { marcador = L.marker(e.latlng).addTo(map); }
             
-            const render = (id, label, data, classes = []) => {
-                let html = `<td class="label">${label}</td>`;
-                data.forEach((d, i) => html += `<td class="${classes[i] || ''}">${d}</td>`);
-                document.getElementById(id).innerHTML = html;
-            };
-
-            // Simulación de datos para las 8 columnas
-            const datosOla = [1.2, 1.3, 1.5, 1.8, 2.0, 2.2, 1.9, 1.7];
-            const datosPer = [9, 9, 10, 11, 12, 13, 12, 10];
-            const datosVnt = [4, 6, 8, 12, 18, 22, 15, 10];
+            document.getElementById('coord-display').innerText = `${e.latlng.lat.toFixed(4)}N ${Math.abs(e.latlng.lng).toFixed(4)}W`;
             
-            const clasesOla = datosOla.map(o => o < 1 ? 'o-baixa' : (o < 2 ? 'o-ideal' : 'o-brava'));
-            const clasesPer = datosPer.map(p => p > 11 ? 'p-peligro' : '');
-            const clasesVnt = datosVnt.map(v => v < 7 ? 'v-calma' : (v < 15 ? 'v-suave' : 'v-fuerte'));
+            // Simulación de profundidad base (Z)
+            fondoBase = (Math.random() * 15 + 1).toFixed(1);
+            actualizarDatos();
+        });
 
-            render('f-hora', 'Hora', horas, Array(8).fill('bg-slate-100'));
-            render('f-marea', 'Marea', ["Baja", "↑ Sub", "↑ Sub", "Plea", "Plea", "↓ Baj", "↓ Baj", "Baja"], ["marea-bajando","marea-subiendo","marea-subiendo","text-blue-800","text-blue-800","marea-bajando","marea-bajando","marea-bajando"]);
-            render('f-ola', 'Ola (m)', datosOla.map(o => o + "m"), clasesOla);
-            render('f-per', 'Periodo', datosPer.map(p => p + "s"), clasesPer);
-            render('f-dir-ola', 'Mar Dir', Array(8).fill('↘'));
-            render('f-vnt', 'Vnt (kn)', datosVnt, clasesVnt);
-            render('f-dir-vnt', 'Vnt Dir', Array(8).fill('↗'));
+        function actualizarDatos() {
+            const horas = Array.from({length: 24}, (_, i) => (i < 10 ? '0' + i : i) + ':00');
+            
+            let hHora = '<td class="label">HORA UTC</td>';
+            let hCalado = '<td class="label">CALADO REAL</td>';
+            let hMarea = '<td class="label">MAREA (m)</td>';
+            let hOla = '<td class="label">OLA (m)</td>';
+            let hPer = '<td class="label">PER (s)</td>';
+            let hVnt = '<td class="label">VNT (kn)</td>';
 
-            const maxPer = Math.max(...datosPer);
-            document.getElementById('nota-pesca').innerText = maxPer > 11 ? "4.5" : "8.2";
-            document.getElementById('consejo-texto').innerText = maxPer > 11 ? "⚠️ Mucho mar de fondo por la tarde." : "✅ Día noble para buscar sargos.";
+            horas.forEach((h, i) => {
+                const marea = (Math.sin((i + 2) * 0.5) * 1.6 + 2.0).toFixed(1);
+                const caladoReal = (parseFloat(fondoBase) + parseFloat(marea)).toFixed(1);
+                const ola = (Math.random() * 1.0 + 0.8).toFixed(1);
+                const per = Math.floor(Math.random() * 5 + 8);
+                const vnt = Math.floor(Math.random() * 10 + 5);
+
+                hHora += `<td class="bg-slate-100">${h}</td>`;
+                hCalado += `<td class="bg-calado">${caladoReal}m</td>`;
+                hMarea += `<td class="text-sky-700">${marea}m</td>`;
+                hOla += `<td class="${ola > 1.7 ? 'o-brava' : 'o-ideal'}">${ola}m</td>`;
+                hPer += `<td class="${per > 11 ? 'p-peligro' : ''}">${per}s</td>`;
+                hVnt += `<td>${vnt}</td>`;
+            });
+
+            document.getElementById('f-hora').innerHTML = hHora;
+            document.getElementById('f-calado').innerHTML = hCalado;
+            document.getElementById('f-marea').innerHTML = hMarea;
+            document.getElementById('f-ola').innerHTML = hOla;
+            document.getElementById('f-per').innerHTML = hPer;
+            document.getElementById('f-vnt').innerHTML = hVnt;
         }
 
-        function cambiarZona(lat, lon) {
-            document.getElementById('mapa').src = `https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d15000!2d${lon}!3d${lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e1!3m2!1ses!2ses!4v1234567&t=k`;
-            actualizarParrilla();
-        }
-
-        function buscarZona() {
-            const z = document.getElementById('input-busqueda').value;
-            if(z) {
-                document.getElementById('mapa').src = `https://www.google.com/maps/embed/v1/search?key=SIN_CLAVE_PERO_FUNCIONA&q=${z}&maptype=satellite`;
-                actualizarParrilla();
-            }
-        }
-
-        function miUbicacion() {
-            navigator.geolocation.getCurrentPosition(p => cambiarZona(p.coords.latitude, p.coords.longitude));
-        }
-
-        window.onload = () => cambiarZona(42.55, -8.95);
+        window.onload = actualizarDatos;
     </script>
 </body>
 </html>
