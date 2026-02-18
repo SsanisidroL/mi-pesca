@@ -3,17 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SargoGuru PRO - V3.6 Final</title>
+    <title>SargoGuru PRO - V3.7 Sincronizada</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background: #fff; margin: 0; padding-bottom: 70px; overflow-y: auto; -webkit-overflow-scrolling: touch; font-family: sans-serif; }
-        
-        /* MAPA */
+        body { background: #fff; margin: 0; padding-bottom: 70px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
         #map { height: 180px; width: 100%; border-bottom: 2px solid #333; }
 
-        /* TABLA CON DESPLAZAMIENTO */
         .tabla-container {
             width: 100%;
             overflow-x: auto;
@@ -25,7 +22,7 @@
         table { border-collapse: collapse; min-width: 1200px; table-layout: fixed; }
         td { border: 0.1px solid #ddd; height: 35px; text-align: center; font-size: 11px; font-weight: bold; width: 50px; }
 
-        /* COLUMNA IZQUIERDA ESTRECHA Y FIJA */
+        /* COLUMNA IZQUIERDA FIJA (85px) */
         .col-fija {
             position: sticky;
             left: 0;
@@ -40,16 +37,17 @@
             text-transform: uppercase;
         }
 
-        /* COLORES DE DATOS */
-        .v-19 { background: #ffff00; } 
-        .v-15 { background: #32ff32; }
-        .r-32 { background: #ff00ff; color: #fff; } 
-        .r-28 { background: #ff3232; color: #fff; }
+        /* COLORES DATOS */
+        .v-19 { background: #ffff00; } .v-15 { background: #32ff32; }
+        .r-32 { background: #ff00ff; color: #fff; } .r-28 { background: #ff3232; color: #fff; }
         .o-azul { background: #ccccff; }
 
-        /* SECCIÓN MAREA INFERIOR */
-        .marea-box { background: #fff; border-top: 1px solid #eee; padding: 15px 0; margin-top: 10px; }
-        .marea-svg { width: 100%; height: 80px; }
+        /* FILA DE MAREA SINCRONIZADA */
+        .fila-marea-svg {
+            height: 60px;
+            padding: 0 !important;
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
@@ -59,7 +57,6 @@
             <button class="bg-gray-700 px-2 py-1 rounded text-[9px] font-bold border border-gray-500 uppercase">🔍 SPOTS</button>
             <span class="text-sky-400 font-bold text-sm">Carrageiros ★</span>
         </div>
-        <div class="text-[9px] opacity-50">v3.6</div>
     </div>
 
     <div id="map"></div>
@@ -83,54 +80,37 @@
                 <td class="o-azul">2.3</td><td class="o-azul">2.3</td><td class="o-azul">2.3</td><td class="o-azul">2.3</td><td>2.0</td><td>1.9</td><td>1.8</td><td>1.7</td><td>1.7</td><td>1.6</td><td>1.5</td><td>1.4</td>
             </tr>
             <tr>
+                <td class="col-fija" style="height: 60px;">Marea</td>
+                <td colspan="11" class="fila-marea-svg">
+                    <svg width="100%" height="60" viewBox="0 0 550 60" preserveAspectRatio="none">
+                        <defs>
+                            <linearGradient id="grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:#4ade80;stop-opacity:0.4" />
+                                <stop offset="100%" style="stop-color:#f87171;stop-opacity:0.4" />
+                            </linearGradient>
+                        </defs>
+                        <path d="M0,30 Q25,0 50,30 Q75,60 100,30 Q125,0 150,30 Q175,60 200,30 Q225,0 250,30 Q275,60 300,30 Q325,0 350,30 Q375,60 400,30 Q425,0 450,30 Q475,60 500,30 Q525,0 550,30" 
+                              stroke="#334155" stroke-width="2" fill="none" />
+                        <path d="M0,30 Q25,0 50,30 Q75,60 100,30 Q125,0 150,30 Q175,60 200,30 Q225,0 250,30 Q275,60 300,30 Q325,0 350,30 Q375,60 400,30 Q425,0 450,30 Q475,60 500,30 Q525,0 550,30 L 550,60 L 0,60 Z" fill="url(#grad)" />
+                    </svg>
+                </td>
+            </tr>
+            <tr>
                 <td class="col-fija">Periodo (s)</td>
                 <td>11</td><td>11</td><td>12</td><td>12</td><td>12</td><td>12</td><td>12</td><td class="bg-red-400 text-white">21</td><td>20</td><td>19</td><td>18</td><td>17</td>
             </tr>
         </table>
     </div>
 
-    <div class="marea-box">
-        <div class="px-4 flex justify-between items-center mb-2">
-            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Gráfico de Mareas</span>
-            <span class="text-green-600 text-[10px] font-bold flex items-center gap-1">
-                <span class="w-2 h-2 bg-green-600 rounded-full animate-pulse"></span> LLENANDO
-            </span>
-        </div>
-        <div class="relative">
-            <div class="flex justify-between text-[9px] px-10 absolute w-full font-bold text-gray-400" style="top: -5px;">
-                <span>16:45</span><span>22:45</span><span>05:00</span><span>11:10</span>
-            </div>
-            <svg class="marea-svg" viewBox="0 0 400 80" preserveAspectRatio="none">
-                <defs>
-                    <linearGradient id="gradMarea" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#4ade80;stop-opacity:0.4" />
-                        <stop offset="100%" style="stop-color:#f87171;stop-opacity:0.4" />
-                    </linearGradient>
-                </defs>
-                <path d="M 0 40 Q 50 0 100 40 Q 150 80 200 40 Q 250 0 300 40 Q 350 80 400 40 L 400 80 L 0 80 Z" fill="url(#gradMarea)" />
-                <path d="M 0 40 Q 50 0 100 40 Q 150 80 200 40 Q 250 0 300 40 Q 350 80 400 40" stroke="#334155" stroke-width="2" fill="none" />
-                <line x1="0" y1="40" x2="400" y2="40" stroke="#cbd5e1" stroke-dasharray="4" />
-            </svg>
-        </div>
-    </div>
-
     <div class="fixed bottom-0 w-full bg-[#1a1a1a] text-white flex justify-around p-2 text-[10px] font-bold z-[1500] border-t border-gray-800">
         <div class="text-center text-sky-400">★<br>Favoritos</div>
         <div class="text-center opacity-40">🗺️<br>Mapas</div>
-        <div class="text-center opacity-40">⚙️<br>Ajustes</div>
     </div>
 
     <script>
-        // Configuración del Mapa
         var map = L.map('map', {zoomControl: false}).setView([42.558, -8.995], 13);
-        
-        // Capa Satélite
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
-        
-        // Capa Nombres y Carreteras
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}').addTo(map);
-        
-        // Marcador del Spot
         L.marker([42.558, -8.995]).addTo(map);
     </script>
 </body>
