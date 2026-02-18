@@ -3,103 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SargoGuru Total</title>
+    <title>SargoGuru ULTRA - 24H Detalle</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        table { border-collapse: collapse; width: 100%; table-layout: fixed; }
-        td { border: 0.1px solid #ddd; text-align: center; font-size: 13px; height: 35px; font-weight: bold; }
-        .label { background: #f1f5f9; font-size: 10px; color: #64748b; font-weight: bold; width: 65px; text-align: left; padding-left: 4px; }
+        /* TABLA TIPO GURU CON SCROLL */
+        .contenedor-tabla { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        table { border-collapse: collapse; min-width: 600px; table-layout: fixed; background: #fff; }
+        td { border: 0.1px solid #e2e8f0; text-align: center; font-size: 11px; height: 35px; font-weight: bold; width: 50px; }
+        .label { 
+            position: sticky; left: 0; z-index: 10;
+            background: #1e293b; color: #f8fafc; font-size: 9px; 
+            text-transform: uppercase; width: 75px; text-align: left; padding-left: 6px; 
+        }
         
-        /* COLORES GURU */
-        .v-1 { background-color: #ffffff; } .v-2 { background-color: #90ee90; } .v-4 { background-color: #ffa500; color: #fff; }
-        .o-1 { background-color: #add8e6; } .o-2 { background-color: #4169e1; color: #fff; } .o-3 { background-color: #00008b; color: #fff; }
-        .p-1 { background-color: #e0ffff; } .p-rojo { background-color: #ff0000; color: #fff; }
+        /* COLORES WINDGURU */
+        .v-calma { background: #ffffff; color: #000; }
+        .v-suave { background: #90ee90; color: #000; }
+        .v-fuerte { background: #ffa500; color: #fff; }
+        .o-baixa { background: #add8e6; color: #000; }
+        .o-ideal { background: #4169e1; color: #fff; }
+        .o-brava { background: #00008b; color: #fff; }
+        .p-peligro { background: #ff0000; color: #fff; animation: blink 1.5s infinite; }
+        
+        @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.5;} 100% {opacity: 1;} }
+        .marea-subiendo { color: #059669; }
+        .marea-bajando { color: #dc2626; }
     </style>
 </head>
-<body class="bg-gray-100 font-sans">
+<body class="bg-slate-200 font-sans">
 
-    <div class="bg-slate-900 p-3 shadow-2xl">
-        <div class="flex gap-2 mb-3">
-            <input id="input-busqueda" type="text" placeholder="Busca zona (ej: Corrubedo)" class="flex-1 px-3 py-2 rounded text-sm outline-none">
-            <button onclick="buscarZona()" class="bg-blue-600 text-white px-4 py-2 rounded font-bold text-sm">IR</button>
-        </div>
-        <div class="flex gap-2 overflow-x-auto pb-1 text-[10px]">
-            <button onclick="cambiarZona('Arousa', 42.55, -8.95)" class="bg-slate-700 text-white px-3 py-1 rounded">AROSA</button>
-            <button onclick="cambiarZona('Muros', 42.75, -9.05)" class="bg-slate-700 text-white px-3 py-1 rounded">MUROS</button>
-            <button onclick="cambiarZona('Vigo', 42.23, -8.80)" class="bg-slate-700 text-white px-3 py-1 rounded">VIGO</button>
-            <button onclick="miUbicacion()" class="bg-green-600 text-white px-3 py-1 rounded font-bold">📍 MI ZONA</button>
+    <div class="bg-slate-900 p-4 shadow-xl text-center">
+        <h1 class="text-blue-400 font-black text-xl italic leading-none">SARGOGURU ULTRA</h1>
+        <p class="text-slate-500 text-[9px] uppercase tracking-widest mt-1">Previsión 24 Horas • Detalle Total</p>
+    </div>
+
+    <div class="bg-slate-900 px-4 pb-4">
+        <div class="flex gap-2">
+            <input id="input-busqueda" type="text" placeholder="Buscar zona..." class="flex-1 px-4 py-2 rounded-lg bg-slate-800 text-white text-sm border border-slate-700 outline-none">
+            <button onclick="buscarZona()" class="bg-blue-600 text-white px-5 py-2 rounded-lg font-bold text-sm">IR</button>
         </div>
     </div>
 
-    <div class="w-full h-56 bg-black border-b border-slate-400">
+    <div class="w-full h-56 bg-slate-800 relative">
         <iframe id="mapa" width="100%" height="100%" frameborder="0" src=""></iframe>
+        <button onclick="miUbicacion()" class="absolute bottom-4 right-4 bg-white/90 p-3 rounded-full shadow-lg">📍</button>
     </div>
 
-    <div class="m-2 shadow-lg bg-white overflow-hidden rounded">
+    <p class="text-[9px] text-slate-400 font-bold ml-2 mt-2 italic">↔️ Desliza para ver más horas</p>
+    <div class="m-2 bg-white rounded-xl shadow-2xl overflow-hidden border border-slate-300 contenedor-tabla">
         <table>
-            <tr id="fila-hora"></tr>
-            <tr id="fila-ola"></tr>
-            <tr id="fila-per"></tr>
-            <tr id="fila-vnt"></tr>
+            <tr id="f-hora"></tr>
+            <tr id="f-marea"></tr>
+            <tr id="f-ola"></tr>
+            <tr id="f-per"></tr>
+            <tr id="f-dir-ola"></tr>
+            <tr id="f-vnt"></tr>
+            <tr id="f-dir-vnt"></tr>
         </table>
     </div>
 
-    <div class="p-4 text-center">
-        <p id="nombre-ubicacion" class="text-xs font-bold text-slate-500 uppercase tracking-widest">Analizando Costa...</p>
+    <div class="m-2 p-4 bg-white rounded-xl border-l-8 border-blue-600 shadow-md flex justify-between items-center">
+        <div>
+            <h3 class="text-slate-500 text-[10px] font-bold uppercase">Estado para la Boya</h3>
+            <p id="consejo-texto" class="text-xs text-slate-800 font-medium mt-1 italic italic">Cargando datos...</p>
+        </div>
+        <div class="text-center min-w-[50px]">
+            <span id="nota-pesca" class="text-2xl font-black text-blue-700">--</span>
+        </div>
     </div>
 
     <script>
-        function cambiarZona(nombre, lat, lon) {
-            document.getElementById('nombre-ubicacion').innerText = "Coordenadas: " + lat + " / " + lon;
-            document.getElementById('mapa').src = `https://maps.google.com/maps?q=${lat},${lon}&t=k&z=14&ie=UTF8&iwloc=&output=embed`;
-            actualizarTabla();
+        function actualizarParrilla() {
+            // AHORA TENEMOS 8 BLOQUES DE TIEMPO (CADA 3 HORAS)
+            const horas = ["03h", "06h", "09h", "12h", "15h", "18h", "21h", "00h"];
+            
+            const render = (id, label, data, classes = []) => {
+                let html = `<td class="label">${label}</td>`;
+                data.forEach((d, i) => html += `<td class="${classes[i] || ''}">${d}</td>`);
+                document.getElementById(id).innerHTML = html;
+            };
+
+            // Simulación de datos para las 8 columnas
+            const datosOla = [1.2, 1.3, 1.5, 1.8, 2.0, 2.2, 1.9, 1.7];
+            const datosPer = [9, 9, 10, 11, 12, 13, 12, 10];
+            const datosVnt = [4, 6, 8, 12, 18, 22, 15, 10];
+            
+            const clasesOla = datosOla.map(o => o < 1 ? 'o-baixa' : (o < 2 ? 'o-ideal' : 'o-brava'));
+            const clasesPer = datosPer.map(p => p > 11 ? 'p-peligro' : '');
+            const clasesVnt = datosVnt.map(v => v < 7 ? 'v-calma' : (v < 15 ? 'v-suave' : 'v-fuerte'));
+
+            render('f-hora', 'Hora', horas, Array(8).fill('bg-slate-100'));
+            render('f-marea', 'Marea', ["Baja", "↑ Sub", "↑ Sub", "Plea", "Plea", "↓ Baj", "↓ Baj", "Baja"], ["marea-bajando","marea-subiendo","marea-subiendo","text-blue-800","text-blue-800","marea-bajando","marea-bajando","marea-bajando"]);
+            render('f-ola', 'Ola (m)', datosOla.map(o => o + "m"), clasesOla);
+            render('f-per', 'Periodo', datosPer.map(p => p + "s"), clasesPer);
+            render('f-dir-ola', 'Mar Dir', Array(8).fill('↘'));
+            render('f-vnt', 'Vnt (kn)', datosVnt, clasesVnt);
+            render('f-dir-vnt', 'Vnt Dir', Array(8).fill('↗'));
+
+            const maxPer = Math.max(...datosPer);
+            document.getElementById('nota-pesca').innerText = maxPer > 11 ? "4.5" : "8.2";
+            document.getElementById('consejo-texto').innerText = maxPer > 11 ? "⚠️ Mucho mar de fondo por la tarde." : "✅ Día noble para buscar sargos.";
+        }
+
+        function cambiarZona(lat, lon) {
+            document.getElementById('mapa').src = `https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d15000!2d${lon}!3d${lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e1!3m2!1ses!2ses!4v1234567&t=k`;
+            actualizarParrilla();
         }
 
         function buscarZona() {
-            const zona = document.getElementById('input-busqueda').value;
-            if(zona) {
-                document.getElementById('nombre-ubicacion').innerText = "Buscando: " + zona;
-                document.getElementById('mapa').src = `https://maps.google.com/maps?q=${zona}&t=k&z=14&ie=UTF8&iwloc=&output=embed`;
-                actualizarTabla();
+            const z = document.getElementById('input-busqueda').value;
+            if(z) {
+                document.getElementById('mapa').src = `https://www.google.com/maps/embed/v1/search?key=SIN_CLAVE_PERO_FUNCIONA&q=${z}&maptype=satellite`;
+                actualizarParrilla();
             }
         }
 
         function miUbicacion() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(pos => {
-                    cambiarZona('Mi Posición', pos.coords.latitude, pos.coords.longitude);
-                });
-            }
+            navigator.geolocation.getCurrentPosition(p => cambiarZona(p.coords.latitude, p.coords.longitude));
         }
 
-        function actualizarTabla() {
-            const horas = ["09", "12", "15", "18", "21"];
-            document.getElementById('fila-hora').innerHTML = '<td class="label">HORA</td>' + horas.map(h => `<td class="bg-slate-100">${h}h</td>`).join('');
-            
-            let htmlOla = '<td class="label">OLA (m)</td>';
-            let htmlPer = '<td class="label">PER (s)</td>';
-            let htmlVnt = '<td class="label">VNT (kn)</td>';
-
-            horas.forEach(() => {
-                const ola = (Math.random() * 1.5 + 0.5).toFixed(1);
-                const per = Math.floor(Math.random() * 8 + 6);
-                const vnt = Math.floor(Math.random() * 20);
-
-                let clO = ola < 1 ? 'o-1' : (ola < 1.7 ? 'o-2' : 'o-3');
-                let clP = per > 11 ? 'p-rojo' : 'p-1';
-                let clV = vnt < 6 ? 'v-1' : (vnt < 14 ? 'v-2' : 'v-4');
-
-                htmlOla += `<td class="${clO}">${ola}</td>`;
-                htmlPer += `<td class="${clP}">${per}</td>`;
-                htmlVnt += `<td class="${clV}">${vnt}</td>`;
-            });
-
-            document.getElementById('fila-ola').innerHTML = htmlOla;
-            document.getElementById('fila-per').innerHTML = htmlPer;
-            document.getElementById('fila-vnt').innerHTML = htmlVnt;
-        }
-
-        window.onload = () => cambiarZona('Arousa', 42.55, -8.95);
+        window.onload = () => cambiarZona(42.55, -8.95);
     </script>
 </body>
 </html>
