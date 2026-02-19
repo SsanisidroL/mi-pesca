@@ -3,53 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SargoGuru V10 - Corregido</title>
+    <title>SargoGuru PRO - Widget Original</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        /* Reset total para evitar el error de NO DATA */
+        /* Permitimos scroll en toda la web para que puedas bajar por la tabla */
         body, html { 
             margin: 0; 
             padding: 0; 
-            height: 100%; 
             background: #fff; 
-            overflow: hidden; /* El scroll lo controla el contenedor de abajo */
+            overflow-y: auto !important; 
         }
 
-        /* Contenedor principal */
-        .wrapper { display: flex; flex-direction: column; height: 100vh; }
-
-        /* Mapa pequeño (25% de la pantalla) */
-        #map { flex: 0 0 25%; width: 100%; border-bottom: 2px solid #000; z-index: 10; }
-
-        /* Barra de estado */
-        .status { background: #000; color: #4ade80; padding: 5px; text-align: center; font-size: 11px; font-weight: bold; }
-
-        /* Contenedor del Widget: Aquí es donde ocurre la magia */
-        #wg-view { 
-            flex: 1; 
-            overflow-y: auto; 
-            overflow-x: auto; /* Permite scroll lateral si las flechas no caben */
-            -webkit-overflow-scrolling: touch;
-        }
-
-        /* Forzamos un tamaño mínimo al iframe para que Windguru no se rompa */
-        iframe { 
+        /* Mapa pequeño y fijo arriba (no estorba al bajar) */
+        #map { 
+            height: 180px; 
             width: 100%; 
-            min-width: 450px; 
-            height: 2000px; 
-            border: none; 
+            border-bottom: 2px solid #000;
+        }
+
+        .spot-label {
+            background: #000;
+            color: #4ade80;
+            padding: 8px;
+            text-align: center;
+            font-family: sans-serif;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        /* El contenedor del widget se expandirá tanto como necesite la tabla */
+        #wg-container {
+            width: 100%;
+            padding-bottom: 50px;
         }
     </style>
 </head>
 <body>
 
-    <div class="wrapper">
-        <div id="map"></div>
-        <div id="spot-label" class="status">SELECCIONA UN SPOT EN EL MAPA</div>
-        
-        <div id="wg-view">
-            <iframe id="wg-frame" src=""></iframe>
+    <div id="map"></div>
+
+    <div id="spot-name" class="spot-label">Selecciona un punto azul</div>
+
+    <div id="wg-container">
+        <div id="wg_target" style="padding: 20px; text-align: center; color: #999;">
+            Toca un punto en el mapa para cargar el Widget oficial...
         </div>
     </div>
 
@@ -59,33 +58,55 @@
             { name: "Noia (Testal)", id: 122550, lat: 42.783, lng: -8.910 },
             { name: "Muros", id: 499696, lat: 42.774, lng: -9.057 },
             { name: "Portosín", id: 208206, lat: 42.760, lng: -8.940 },
+            { name: "Aguieira", id: 48734, lat: 42.741, lng: -8.962 },
             { name: "Boiro (Barraña)", id: 501118, lat: 42.641, lng: -8.885 },
             { name: "Illa de Arousa", id: 48737, lat: 42.565, lng: -8.874 },
             { name: "O Grove / Lanzada", id: 32516, lat: 42.443, lng: -8.878 }
         ];
 
+        // Inicializar Mapa
         var map = L.map('map', { zoomControl: false }).setView([42.65, -8.95], 10);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
 
-        function cargarSpot(id, name) {
-            document.getElementById('spot-label').innerText = "VIENDO: " + name;
+        function cargarWidgetOriginal(id, name) {
+            document.getElementById('spot-name').innerText = "Viendo: " + name;
             
-            // Esta URL es la "limpia" que saca las mareas y flechas como tu foto 1
-            const url = `https://www.windguru.cz/int/distr.php?u=${id}&s=${id}&m=3&p=WINDSPD,GUST,MWINDDIR,SMWAVE,HTSGW,PERPW,DIRPW,TMP,TCDC,APCP1s&USD=1&wj=knots&tj=c&waj=m`;
-            
-            document.getElementById('wg-frame').src = url;
-            // Reset de scroll al cambiar de spot
-            document.getElementById('wg-view').scrollTop = 0;
+            const container = document.getElementById('wg-container');
+            container.innerHTML = ""; // Limpiar antes de cargar
+
+            // Crear el script exacto de Windguru que funcionó la primera vez
+            const script = document.createElement("script");
+            const uid = "wg_fwdg_" + id + "_3_" + Date.now();
+            script.id = uid;
+
+            // Esta es la configuración pata negra: nudos, metros, 10 días y todas las filas
+            const arg = [
+                "s=" + id,
+                "m=3",
+                "uid=" + uid,
+                "wj=knots",
+                "tj=c",
+                "waj=m",
+                "fhours=240",
+                "p=WINDSPD,GUST,MWINDDIR,SMWAVE,HTSGW,PERPW,DIRPW,TMP,TCDC,APCP1s,RH,SLP,WSTAR"
+            ];
+
+            script.src = "https://www.windguru.cz/js/widget.php?" + (arg.join("&"));
+            container.appendChild(script);
+
+            // Scroll suave hacia la tabla al seleccionar
+            window.scrollTo({ top: 180, behavior: 'smooth' });
         }
 
+        // Puntos en el mapa
         spots.forEach(spot => {
             L.circleMarker([spot.lat, spot.lng], {
                 radius: 12, fillColor: "#38bdf8", color: "#fff", weight: 3, fillOpacity: 0.9
-            }).addTo(map).on('click', () => cargarSpot(spot.id, spot.name));
+            }).addTo(map).on('click', () => cargarWidgetOriginal(spot.id, spot.name));
         });
 
-        // Carga automática inicial
-        window.onload = () => cargarSpot(719, "Ribeira / Carrageiros");
+        // Cargar Ribeira al iniciar
+        window.onload = () => cargarWidgetOriginal(719, "Ribeira / Carrageiros");
     </script>
 </body>
 </html>
