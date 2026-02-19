@@ -1,80 +1,86 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SargoGuru V12 - Profesional</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <style>
-        body, html { margin: 0; padding: 0; background: #fff; overflow-y: auto !important; }
-        /* Mapa tamaño banner - no bloquea el scroll */
-        #map { height: 200px; width: 100%; border-bottom: 2px solid #000; position: sticky; top: 0; z-index: 1000; }
-        .spot-info { background: #000; color: #4ade80; padding: 8px; text-align: center; font-family: sans-serif; font-size: 11px; font-weight: bold; position: sticky; top: 200px; z-index: 999; border-bottom: 1px solid #333; }
-        /* Contenedor del widget libre para scroll vertical y horizontal */
-        #wg-container { width: 100%; overflow-x: auto; min-height: 1200px; }
-    </style>
+<meta charset="UTF-8">
+<title>App de Pesca — Cuaderno de bitácora</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+  #map { height: 300px; }
+  #widget { width: 100%; height: 500px; border: none; }
+  .container { padding: 10px; }
+  .btn { background: #0078FF; color: white; padding: 10px; border: none; cursor: pointer; }
+</style>
 </head>
 <body>
 
-<div id="map"></div>
-<div id="spot-name" class="spot-info">SELECCIONA UN SPOT EN EL MAPA</div>
-<div id="wg-container"><div id="wg_target"></div></div>
+<div class="container">
+  <h2>📍 Mapa de Spots</h2>
+  <div id="map"></div>
+</div>
+
+<div class="container">
+  <h2>🌊 Pronóstico - Windguru</h2>
+  <iframe id="widget"></iframe>
+</div>
+
+<div class="container">
+  <button class="btn" onclick="openLog()">📓 Cuaderno de bitácora</button>
+</div>
+
+<div class="container">
+  <h2>🛰️ Mapa Satélite de Galicia</h2>
+  <iframe
+    width="100%" height="450"
+    src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d100000!2d-8.900000!3d42.700000!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1ses!2ses!4v1700000000000!5m2!1ses!2ses"
+    style="border:0;" allowfullscreen="" loading="lazy">
+  </iframe>
+</div>
 
 <script>
-    // IDs Y COORDENADAS OFICIALES DE WINDGURU (GALICIA)
-    const spots = [
-        { name: "Muros", id: 499696, lat: 42.7745, lng: -9.0575 },
-        { name: "Lariño", id: 48729, lat: 42.7667, lng: -9.1100 },
-        { name: "Noia (Testal)", id: 122550, lat: 42.7836, lng: -8.9102 },
-        { name: "Portosín", id: 208206, lat: 42.7602, lng: -8.9403 },
-        { name: "Playa de Aguieira", id: 48734, lat: 42.7410, lng: -8.9620 },
-        { name: "Porto do Son", id: 48733, lat: 42.7234, lng: -9.0067 },
-        { name: "Corrubedo", id: 48735, lat: 42.5762, lng: -9.0821 },
-        { name: "Ribeira (Carrageiros)", id: 719, lat: 42.5582, lng: -8.9954 },
-        { name: "A Pobra do Caramiñal", id: 211052, lat: 42.6032, lng: -8.9341 },
-        { name: "Boiro", id: 501118, lat: 42.6412, lng: -8.8854 },
-        { name: "Rianxo", id: 499702, lat: 42.6512, lng: -8.8142 },
-        { name: "Illa de Arousa", id: 48737, lat: 42.5654, lng: -8.8741 },
-        { name: "Vilagarcía", id: 475161, lat: 42.5978, lng: -8.7654 },
-        { name: "O Grove", id: 499704, lat: 42.4965, lng: -8.8643 },
-        { name: "A Lanzada", id: 32516, lat: 42.4432, lng: -8.8781 }
-    ];
+  // Lista de spots con sus coordenadas aproximadas
+  const spots = [
+    { name: "Spot 48735", id: "48735", lat: 42.850, lon: -9.050 },
+    { name: "Spot 48734", id: "48734", lat: 42.840, lon: -9.040 },
+    { name: "Spot 48736", id: "48736", lat: 42.860, lon: -9.030 },
+    { name: "Spot 501116", id: "501116", lat: 42.600, lon: -8.950 },
+    { name: "Spot 128497", id: "128497", lat: 42.550, lon: -8.950 },
+  ];
 
-    var map = L.map('map', { zoomControl: false }).setView([42.65, -8.95], 10);
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
+  // Inicializa mapa con OpenStreetMap
+  const mapDiv = document.getElementById('map');
+  const map = L.map(mapDiv).setView([42.7, -8.9], 9);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+  }).addTo(map);
 
-    function loadWindguru(id, name) {
-        document.getElementById('spot-name').innerText = "VIENDO: " + name;
-        const container = document.getElementById('wg-container');
-        container.innerHTML = `<div id="wg_target"></div>`;
-
-        const script = document.createElement('script');
-        const uid = "wg_fwdg_" + id + "_3_" + Date.now();
-        script.id = uid;
-
-        // PARÁMETROS PARA MOSTRAR TODO (FLECHAS, OLAS, MAREAS)
-        const args = [
-            "s=" + id, "m=3", "uid=" + uid,
-            "wj=knots", "tj=c", "waj=m", "fhours=240",
-            "p=WINDSPD,GUST,MWINDDIR,SMWAVE,HTSGW,PERPW,DIRPW,TMP,TCDC,APCP1s,RH,SLP,WSTAR,TIDE",
-            "lng=es", "pk=1", "cgh=1"
-        ];
-
-        script.src = "https://www.windguru.cz/js/widget.php?" + args.join("&");
-        container.appendChild(script);
-    }
-
-    spots.forEach(spot => {
-        L.marker([spot.lat, spot.lng]).addTo(map)
-            .on('click', (e) => {
-                loadWindguru(spot.id, spot.name);
-                map.panTo(e.latlng);
-            })
-            .bindTooltip(spot.name);
+  spots.forEach(s => {
+    const marker = L.marker([s.lat, s.lon]).addTo(map);
+    marker.bindPopup(s.name);
+    marker.on('click', () => {
+      document.getElementById('widget').src =
+        "https://www.windguru.cz/int/index.php?sc=" + s.id;
     });
+  });
 
-    window.onload = () => loadWindguru(719, "Ribeira (Carrageiros)");
+  function openLog() {
+    const spot = prompt("Nombre del spot seleccionado:");
+    const date = prompt("Fecha (YYYY-MM-DD):");
+    const conditions = prompt("Condiciones (copia/pega del widget):");
+    const catches = prompt("Capturas:");
+    const notes = prompt("Notas:");
+
+    const log = { spot, date, conditions, catches, notes };
+    let logs = JSON.parse(localStorage.getItem("pescaLogs") || "[]");
+    logs.push(log);
+    localStorage.setItem("pescaLogs", JSON.stringify(logs));
+    alert("✅ Guardado en tu Cuaderno de bitácora");
+  }
 </script>
+
+<!-- Importa Leaflet JS para mapas (gratis) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
 </body>
 </html>
