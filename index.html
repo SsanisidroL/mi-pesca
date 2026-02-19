@@ -2,104 +2,130 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SargoGuru PRO - Selector de Spots</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SargoGuru V11 - Reset</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background: #1a1a1a; margin: 0; padding-bottom: 60px; font-family: sans-serif; }
-        #map { height: 300px; width: 100%; border-bottom: 3px solid #333; }
-        .widget-container { width: 100%; background: #fff; min-height: 500px; transition: all 0.3s; }
-        .spot-header { background: #222; color: #4ade80; padding: 10px; font-weight: bold; text-align: center; font-size: 14px; text-transform: uppercase; }
+        /* Permitimos que la página crezca todo lo necesario hacia abajo */
+        body, html { 
+            margin: 0; 
+            padding: 0; 
+            background: #fff; 
+            font-family: Arial, sans-serif;
+            overflow-x: hidden;
+            overflow-y: auto !important; /* Scroll vertical libre */
+        }
+
+        /* 1. MAPA ARRIBA: Altura pequeña para dejar ver los datos */
+        #map { 
+            height: 220px; 
+            width: 100%; 
+            border-bottom: 2px solid #000;
+        }
+
+        .spot-header {
+            background: #000;
+            color: #4ade80;
+            padding: 10px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        /* 2. CONTENEDOR DEL WIDGET: Sin límites de altura */
+        #wg-container {
+            width: 100%;
+            min-height: 1000px;
+            padding-bottom: 100px;
+        }
+
+        .leaflet-tooltip { background: #000; color: #fff; border: 1px solid #4ade80; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="bg-black text-white p-3 flex justify-between items-center sticky top-0 z-[2000]">
-        <span class="font-bold text-sky-400">SARGOGURU <span class="text-white text-xs">| SELECTOR</span></span>
-        <span id="status" class="text-[10px] bg-green-900 text-green-300 px-2 py-1 rounded animate-pulse">MAPA ACTIVO</span>
-    </div>
-
     <div id="map"></div>
 
-    <div id="spot-name" class="spot-header">Tocando un punto en el mapa...</div>
+    <div id="spot-name" class="spot-header">Cargando puntos de Galicia...</div>
 
-    <div id="wg-container" class="widget-container">
-        <div class="p-10 text-center text-gray-400">Selecciona un punto azul en el mapa para cargar el pronóstico de Windguru</div>
-    </div>
-
-    <div class="fixed bottom-0 w-full bg-black text-white flex justify-around p-3 text-[10px] z-[2000] border-t border-gray-800">
-        <div class="text-center text-sky-400">📍 SELECCIONAR SPOT</div>
-        <div class="text-center opacity-50" onclick="location.reload()">🔄 REFRESCAR</div>
+    <div id="wg-container">
+        <div id="wg_target"></div>
     </div>
 
     <script>
-        // 1. LISTA DE SPOTS (Puedes añadir más aquí con su ID de Windguru)
+        // --- BASE DE DATOS DE SPOTS (Coordenadas verificadas) ---
         const spots = [
-            { name: "Carrageiros (Ribeira)", id: 719, lat: 42.558, lng: -8.995 },
-            { name: "Playa de Razo", id: 211, lat: 43.287, lng: -8.704 },
-            { name: "Pantín (Ferrol)", id: 161, lat: 43.636, lng: -8.110 },
-            { name: "Patos (Nigrán)", id: 154, lat: 42.138, lng: -8.841 },
-            { name: "A Lanzada", id: 554, lat: 42.435, lng: -8.878 },
-            { name: "Malpica", id: 48723, lat: 43.323, lng: -8.811 },
-            { name: "Fisterra", id: 553, lat: 42.909, lng: -9.262 }
+            // MUROS Y NOIA
+            { name: "Muros", id: 499696, lat: 42.7745, lng: -9.0575 },
+            { name: "Noia (Testal)", id: 122550, lat: 42.7836, lng: -8.9102 },
+            { name: "Portosín", id: 208206, lat: 42.7602, lng: -8.9403 },
+            { name: "Playa de Aguieira", id: 48734, lat: 42.7410, lng: -8.9620 },
+            { name: "Louro (Ancoradoiro)", id: 14670, lat: 42.7565, lng: -9.1023 },
+            { name: "Porto do Son", id: 48733, lat: 42.7234, lng: -9.0067 },
+            
+            // AROUSA
+            { name: "Carrageiros (Ribeira)", id: 719, lat: 42.5582, lng: -8.9954 },
+            { name: "Aguiño", id: 499701, lat: 42.5234, lng: -9.0123 },
+            { name: "Boiro (Barraña)", id: 501118, lat: 42.6412, lng: -8.8854 },
+            { name: "Pobra do Caramiñal", id: 211052, lat: 42.6032, lng: -8.9341 },
+            { name: "Illa de Arousa", id: 48737, lat: 42.5654, lng: -8.8741 },
+            { name: "Vilagarcía", id: 475161, lat: 42.5978, lng: -8.7654 },
+            { name: "Cambados", id: 217403, lat: 42.5152, lng: -8.8156 },
+            { name: "A Lanzada", id: 32516, lat: 42.4432, lng: -8.8781 },
+            { name: "O Grove", id: 499704, lat: 42.4965, lng: -8.8643 }
         ];
 
-        // 2. INICIALIZAR MAPA (Vista Galicia)
-        var map = L.map('map', { zoomControl: false }).setView([42.9, -8.8], 8);
+        // INICIALIZAR MAPA
+        var map = L.map('map', { zoomControl: false }).setView([42.65, -8.95], 10);
         
-        // Capa Satélite Híbrida
+        // Capa Satélite
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}').addTo(map);
 
-        // 3. FUNCIÓN PARA CARGAR EL WIDGET DINÁMICAMENTE
-        function loadWindguru(spotId, spotName) {
+        function cargarWindguru(id, name) {
+            document.getElementById('spot-name').innerText = "Viendo: " + name;
+            
             const container = document.getElementById('wg-container');
-            const nameHeader = document.getElementById('spot-name');
-            
-            // Actualizar nombre
-            nameHeader.innerText = "SPOT: " + spotName;
-            
-            // Limpiar contenedor
-            container.innerHTML = `<div class="p-10 text-center">Cargando datos de ${spotName}...</div>`;
+            container.innerHTML = ""; // Limpiar el anterior
 
-            // Crear el nuevo script del Widget
-            const scriptId = "wg_script_" + spotId;
-            const oldScript = document.getElementById(scriptId);
-            if (oldScript) oldScript.remove();
-
+            // Crear el script original de Windguru
             const script = document.createElement('script');
-            script.id = scriptId;
-            // Configuración del widget (mismos parámetros que quieres: nudos, metros, 240h)
+            const uid = "wg_fwdg_" + id + "_3_" + Date.now();
+            script.id = uid;
+
+            // Configuración que garantiza flechas y colores originales
             const args = [
-                "s=" + spotId,
+                "s=" + id,
                 "m=3",
-                "uid=" + scriptId,
-                "wj=knots",
-                "tj=c",
-                "waj=m",
-                "fhours=240",
-                "p=WINDSPD,GUST,MWINDDIR,SMWAVE,HTSGW,PERPW,DIRPW,TMP,TCDC,APCP1s"
+                "uid=" + uid,
+                "wj=knots", // Nudos
+                "tj=c",     // Celsius
+                "waj=m",    // Metros
+                "fhours=240", // 10 días
+                "p=WINDSPD,GUST,MWINDDIR,SMWAVE,HTSGW,PERPW,DIRPW,TMP,TCDC,APCP1s,RH,SLP,WSTAR"
             ];
-            
+
             script.src = "https://www.windguru.cz/js/widget.php?" + args.join("&");
-            container.innerHTML = ""; // Limpiar el "Cargando..."
             container.appendChild(script);
         }
 
-        // 4. AÑADIR MARCADORES AL MAPA
+        // COLOCAR MARCAS
         spots.forEach(spot => {
-            let marker = L.marker([spot.lat, spot.lng]).addTo(map);
-            marker.on('click', function() {
-                loadWindguru(spot.id, spot.name);
-                map.flyTo([spot.lat, spot.lng], 12); // Zoom suave al sitio
+            let marker = L.circleMarker([spot.lat, spot.lng], {
+                radius: 10, fillColor: "#38bdf8", color: "#fff", weight: 2, fillOpacity: 0.9
+            }).addTo(map);
+            
+            marker.on('click', () => {
+                cargarWindguru(spot.id, spot.name);
+                map.panTo([spot.lat, spot.lng]);
             });
-            marker.bindTooltip(spot.name, { permanent: false, direction: 'top' });
+
+            marker.bindTooltip(spot.name, { direction: 'top' });
         });
 
-        // Cargar el primero por defecto
-        window.onload = () => loadWindguru(719, "Carrageiros (Ribeira)");
+        // Cargar Ribeira por defecto
+        window.onload = () => cargarWindguru(719, "Carrageiros (Ribeira)");
 
     </script>
 </body>
