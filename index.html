@@ -3,53 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SargoGuru V8 - Scroll Libre</title>
+    <title>SargoGuru V9 - Vista Real</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Permitimos scroll en toda la página */
-        html, body { 
-            background: #f0f0f0; 
+        /* IMPORTANTE: Permitir scroll normal en toda la página */
+        body, html { 
             margin: 0; 
             padding: 0; 
+            background: #fff; 
             overflow-y: auto !important; 
-            height: auto !important;
+            font-family: sans-serif;
         }
 
-        /* Mapa con altura pequeña y fija */
+        /* Mapa pequeño y fijo arriba para que no estorbe */
         #map { 
-            height: 180px; 
+            height: 140px; 
             width: 100%; 
-            border-bottom: 2px solid #333; 
-            position: sticky; 
-            top: 0; 
-            z-index: 1000;
+            border-bottom: 2px solid #000;
         }
 
-        .spot-info { 
-            background: #000; 
-            color: #4ade80; 
-            padding: 10px; 
-            text-align: center; 
-            font-weight: bold; 
-            font-size: 12px;
-            position: sticky;
-            top: 180px;
-            z-index: 999;
+        .status-bar {
+            background: #000;
+            color: #4ade80;
+            padding: 8px;
+            font-size: 11px;
+            text-align: center;
+            font-weight: bold;
+            text-transform: uppercase;
         }
 
-        /* Contenedor del widget que se expande hacia abajo */
-        #wg-content { 
-            width: 100%; 
-            min-height: 1500px; /* Forzamos altura para asegurar el scroll */
-            background: #fff;
+        /* Contenedor de Windguru: Sin límites de altura */
+        #wg-container {
+            width: 100%;
+            min-height: 2000px; /* Para asegurar que el scroll funcione */
         }
 
-        iframe { 
-            width: 100%; 
-            height: 1500px; 
-            border: none; 
+        iframe {
+            width: 100%;
+            height: 2000px;
+            border: none;
         }
     </style>
 </head>
@@ -57,51 +50,51 @@
 
     <div id="map"></div>
 
-    <div id="spot-label" class="spot-info uppercase">Toca un punto en el mapa</div>
+    <div id="spot-name" class="status-bar">Toca un punto azul en el mapa</div>
 
-    <div id="wg-content">
+    <div id="wg-container">
         <iframe id="wg-frame" src=""></iframe>
     </div>
 
     <script>
+        // Lista de spots optimizada
         const spots = [
             { name: "Muros", id: 499696, lat: 42.774, lng: -9.057 },
             { name: "Noia (Testal)", id: 122550, lat: 42.783, lng: -8.910 },
             { name: "Portosín", id: 208206, lat: 42.760, lng: -8.940 },
-            { name: "Aguieira", id: 48734, lat: 42.741, lng: -8.962 },
             { name: "Ribeira / Carrageiros", id: 719, lat: 42.558, lng: -8.995 },
             { name: "Boiro (Barraña)", id: 501118, lat: 42.641, lng: -8.885 },
             { name: "Illa de Arousa", id: 48737, lat: 42.565, lng: -8.874 },
             { name: "O Grove / Lanzada", id: 32516, lat: 42.443, lng: -8.878 }
         ];
 
-        // Inicializar mapa
+        // Inicializar mapa (Vista satélite)
         var map = L.map('map', { zoomControl: false }).setView([42.65, -8.95], 10);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
 
-        function loadSpot(id, name) {
-            document.getElementById('spot-label').innerText = "SPOT: " + name;
+        function cargarSpot(id, name) {
+            document.getElementById('spot-name').innerText = "Viendo: " + name;
             
-            // Usamos una URL de Windguru que funciona mejor en marcos (iframe)
+            // Esta URL es la que saca las flechas negras y la tabla limpia como tu foto 2
             const url = `https://www.windguru.cz/int/distr.php?u=${id}&s=${id}&m=3&p=WINDSPD,GUST,MWINDDIR,SMWAVE,HTSGW,PERPW,DIRPW,TMP,TCDC,APCP1s&USD=1&wj=knots&tj=c&waj=m`;
             
             document.getElementById('wg-frame').src = url;
             
-            // Al cambiar de spot, volvemos arriba de la tabla para empezar a leer
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Al cambiar, hacemos que la página suba para ver el principio de la tabla
+            window.scrollTo({ top: 140, behavior: 'smooth' });
         }
 
-        // Añadir puntos al mapa
+        // Poner los puntos en el mapa
         spots.forEach(spot => {
             let marker = L.circleMarker([spot.lat, spot.lng], {
                 radius: 12, fillColor: "#38bdf8", color: "#fff", weight: 3, fillOpacity: 0.9
             }).addTo(map);
             
-            marker.on('click', () => loadSpot(spot.id, spot.name));
+            marker.on('click', () => cargarSpot(spot.id, spot.name));
         });
 
-        // Cargar Ribeira por defecto
-        window.onload = () => loadSpot(719, "Ribeira / Carrageiros");
+        // Por defecto cargar Ribeira
+        window.onload = () => cargarSpot(719, "Ribeira / Carrageiros");
     </script>
 </body>
 </html>
