@@ -2,80 +2,119 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Mapa de Viento - Rías de Noia y Arousa</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SargoGuru PRO - Full Rías</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-        #map { height: 50%; width: 100%; border-bottom: 2px solid #ccc; }
-        #widget-container { height: 50%; width: 100%; background: #f4f4f4; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .info-msg { color: #666; font-style: italic; }
-        h3 { margin: 10px; font-size: 16px; color: #333; }
+        body { background: #121212; margin: 0; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; }
+        
+        /* Mapa más grande para manejar muchos puntos */
+        #map { flex: 0 0 60%; width: 100%; border-bottom: 3px solid #333; }
+
+        /* Contenedor del Widget */
+        #wg-wrapper { flex: 1; background: #fff; overflow-y: auto; color: black; }
+
+        .spot-header {
+            background: #000; color: #4ade80; padding: 8px; text-align: center;
+            font-size: 11px; font-weight: bold; border-bottom: 1px solid #444; text-transform: uppercase;
+        }
+
+        .leaflet-tooltip { background: rgba(0,0,0,0.8); color: #fff; border: none; font-size: 10px; }
     </style>
 </head>
 <body>
 
+    <div class="bg-black text-white p-3 flex justify-between items-center z-[2000]">
+        <span class="font-bold text-sky-400">SARGOGURU <span class="text-white text-[10px]">MAPA TOTAL RÍAS</span></span>
+        <span id="load-status" class="text-[9px] bg-green-900 text-green-300 px-2 py-0.5 rounded">V6.0</span>
+    </div>
+
     <div id="map"></div>
-    
-    <div id="widget-container">
-        <h3 id="spot-name">Selecciona un punto en el mapa para ver la previsión</h3>
-        <div id="windguru-embed" style="width: 100%; height: 100%;">
-            <p class="info-msg">Haz clic en un marcador (azul para Noia, rojo para Arousa)</p>
+
+    <div id="spot-name" class="spot-header">TOCA UN PUNTO AZUL EN EL MAPA</div>
+
+    <div id="wg-wrapper">
+        <div id="wg-container" class="p-8 text-center text-gray-500 italic text-sm">
+            Selecciona un spot para ver el parte real de Windguru...
         </div>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Configuración inicial del mapa centrada en las dos rías
-        const map = L.map('map').setView([42.65, -8.95], 10);
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
-
-        // Lista ampliada de spots de Windguru
+        // --- BASE DE DATOS TOTAL DE SPOTS (MUROS-NOIA Y AROUSA) ---
         const spots = [
-            // --- RÍA DE MUROS E NOIA ---
-            { name: "Muros", id: 499696, lat: 42.774, lng: -9.057, ria: "noia" },
-            { name: "Noia (Testal)", id: 122550, lat: 42.783, lng: -8.910, ria: "noia" },
-            { name: "Portosín", id: 208206, lat: 42.760, lng: -8.940, ria: "noia" },
-            { name: "Playa de Aguieira", id: 48734, lat: 42.740, lng: -8.960, ria: "noia" },
-            { name: "Louro (Ancoradoiro)", id: 14670, lat: 42.760, lng: -9.100, ria: "noia" },
+            // RÍA DE MUROS E NOIA (Norte a Sur)
+            { name: "Muros (Muelle)", id: 499696, lat: 42.7745, lng: -9.0575 },
+            { name: "Louro (Ancoradoiro)", id: 14670, lat: 42.7565, lng: -9.1023 },
+            { name: "Playa de Area Maior", id: 48729, lat: 42.7621, lng: -9.0832 },
+            { name: "Esteiro", id: 211051, lat: 42.7885, lng: -8.9832 },
+            { name: "Noia (Testal)", id: 122550, lat: 42.7836, lng: -8.9102 },
+            { name: "Boa / Taramancos", id: 499697, lat: 42.7712, lng: -8.9254 },
+            { name: "Portosín", id: 208206, lat: 42.7602, lng: -8.9403 },
+            { name: "Playa de Aguieira", id: 48734, lat: 42.7410, lng: -8.9620 },
+            { name: "Porto do Son", id: 48733, lat: 42.7234, lng: -9.0067 },
+            { name: "Queiruga", id: 499700, lat: 42.6841, lng: -9.0432 },
+            { name: "Corrubedo (Faro)", id: 48735, lat: 42.5762, lng: -9.0821 },
 
-            // --- RÍA DE AROUSA ---
-            { name: "Ribeira (Sta. Uxía)", id: 388522, lat: 42.568, lng: -8.980, ria: "arousa" },
-            { name: "Boiro (Playa Barraña)", id: 501118, lat: 42.640, lng: -8.880, ria: "arousa" },
-            { name: "Vilagarcía de Arousa", id: 475161, lat: 42.595, lng: -8.765, ria: "arousa" },
-            { name: "Illa de Arousa", id: 48737, lat: 42.555, lng: -8.875, ria: "arousa" },
-            { name: "Cambados", id: 217403, lat: 42.515, lng: -8.815, ria: "arousa" },
-            { name: "O Grove (La Lanzada)", id: 32516, lat: 42.450, lng: -8.875, ria: "arousa" },
-            { name: "Lourido (San Salvador)", id: 188276, lat: 42.420, lng: -8.674, ria: "arousa" }
+            // RÍA DE AROUSA (Norte a Sur)
+            { name: "Ribeira (Ciudad)", id: 388522, lat: 42.5574, lng: -8.9902 },
+            { name: "Carrageiros", id: 719, lat: 42.5582, lng: -8.9954 },
+            { name: "Aguiño", id: 499701, lat: 42.5234, lng: -9.0123 },
+            { name: "A Pobra do Caramiñal", id: 211052, lat: 42.6032, lng: -8.9341 },
+            { name: "Boiro (Barraña)", id: 501118, lat: 42.6412, lng: -8.8854 },
+            { name: "Rianxo", id: 499702, lat: 42.6512, lng: -8.8142 },
+            { name: "Vilagarcía (Puerto)", id: 475161, lat: 42.5978, lng: -8.7654 },
+            { name: "Vilagarcía (Compostela)", id: 501119, lat: 42.6102, lng: -8.7754 },
+            { name: "Vilanova de Arousa", id: 499703, lat: 42.5621, lng: -8.8234 },
+            { name: "Illa de Arousa (Xufre)", id: 48737, lat: 42.5654, lng: -8.8741 },
+            { name: "Illa de Arousa (O Bao)", id: 501120, lat: 42.5412, lng: -8.8654 },
+            { name: "Cambados", id: 217403, lat: 42.5152, lng: -8.8156 },
+            { name: "O Grove (Puerto)", id: 499704, lat: 42.4965, lng: -8.8643 },
+            { name: "A Lanzada (Sur)", id: 32516, lat: 42.4432, lng: -8.8781 },
+            { name: "San Vicente do Mar", id: 48738, lat: 42.4612, lng: -8.9142 }
         ];
 
-        const container = document.getElementById('windguru-embed');
-        const nameDisplay = document.getElementById('spot-name');
+        // --- MAPA ---
+        var map = L.map('map', { zoomControl: false }).setView([42.65, -8.95], 11);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}').addTo(map);
 
-        // Función para cargar el widget de Windguru
-        function loadWindguru(spotId, spotName) {
-            nameDisplay.innerText = "Previsión para: " + spotName;
-            container.innerHTML = `
-                <iframe 
-                    src="https://www.windguru.cz/int/distr.php?u=${spotId}&s=${spotId}&m=3&p=WIND,GUST,DIR,TMPE&USD=1" 
-                    style="width:100%; height:100%; border:none;">
-                </iframe>`;
+        function updateWG(id, name) {
+            const wrapper = document.getElementById('wg-wrapper');
+            const nameLabel = document.getElementById('spot-name');
+            nameLabel.innerText = "SPOT ACTUAL: " + name;
+
+            wrapper.innerHTML = `<div id="wg_target"></div>`;
+            const script = document.createElement('script');
+            const uid = "wg_fwdg_" + id + "_3_" + Date.now();
+            script.id = uid;
+            const args = ["s="+id, "m=3", "uid="+uid, "wj=knots", "tj=c", "waj=m", "fhours=240", "p=WINDSPD,GUST,MWINDDIR,SMWAVE,HTSGW,PERPW,DIRPW,TMP,TCDC,APCP1s"];
+            script.src = "https://www.windguru.cz/js/widget.php?" + args.join("&");
+            wrapper.appendChild(script);
         }
 
-        // Añadir marcadores al mapa
+        // --- COLOCAR TODOS LOS MARCADORES ---
         spots.forEach(spot => {
-            // Color diferenciado por ría
-            const color = spot.ria === "noia" ? "blue" : "red";
+            let marker = L.circleMarker([spot.lat, spot.lng], {
+                radius: 7,
+                fillColor: "#38bdf8",
+                color: "#fff",
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.8
+            }).addTo(map);
             
-            const marker = L.marker([spot.lat, spot.lng]).addTo(map);
-            marker.bindTooltip(spot.name, { permanent: false, direction: 'top' });
-
             marker.on('click', () => {
-                loadWindguru(spot.id, spot.name);
+                updateWG(spot.id, spot.name);
+                map.panTo([spot.lat, spot.lng]);
             });
+
+            marker.bindTooltip(spot.name);
         });
+
+        // Inicio por defecto
+        window.onload = () => updateWG(719, "Carrageiros");
     </script>
 </body>
 </html>
