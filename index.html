@@ -1,131 +1,93 @@
-            });
-            marker.bindTooltip(spot.name);
-        });
-
-        window.onload = () => loadWindguru(719, "Ribeira / Carrageiros");
-    </script>
-</body>
-</html>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SargoGuru PRO - Full Data</title>
+    <title>SargoGuru V7 - Vista Directa</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background: #111; margin: 0; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        body, html { margin: 0; padding: 0; height: 100%; background: #000; overflow: hidden; }
         
-        /* Mapa */
-        #map { flex: 0 0 45%; width: 100%; border-bottom: 2px solid #444; }
+        /* Contenedor principal: Mapa arriba, Contenido abajo */
+        .main-container { display: flex; flex-direction: column; height: 100vh; }
 
-        /* Contenedor del Widget con Scroll Horizontal */
-        #wg-wrapper { 
+        /* Mapa más pequeño (30% de la pantalla) */
+        #map { flex: 0 0 30%; width: 100%; border-bottom: 2px solid #444; }
+
+        /* El contenedor del widget ahora permite scroll vertical total */
+        #wg-view { 
             flex: 1; 
-            background: #fff; 
-            overflow-x: auto; /* Permite deslizar la tabla si es muy ancha */
-            overflow-y: auto;
+            width: 100%; 
+            overflow-y: auto; 
             -webkit-overflow-scrolling: touch;
+            background: #fff;
         }
 
-        /* Forzamos que el widget mantenga un ancho mínimo para que no oculte flechas */
-        #wg-container {
-            min-width: 800px; 
-            padding: 10px;
-        }
+        iframe { width: 100%; height: 2500px; border: none; }
 
-        .spot-bar { background: #000; color: #4ade80; padding: 8px; text-align: center; font-weight: bold; font-size: 11px; border-bottom: 1px solid #333; }
-        .leaflet-tooltip { background: #222; color: #fff; border: 1px solid #4ade80; }
+        .spot-header { background: #111; color: #4ade80; padding: 5px; text-align: center; font-size: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="bg-black p-3 flex justify-between items-center border-b border-gray-800">
-        <span class="font-bold text-sky-400 text-sm">SARGOGURU <span class="text-white text-[10px]">| DATOS COMPLETOS</span></span>
-    </div>
+    <div class="main-container">
+        <div id="map"></div>
 
-    <div id="map"></div>
+        <div id="spot-name" class="spot-header uppercase">Toca un punto para ver el parte real</div>
 
-    <div id="spot-label" class="spot-bar uppercase tracking-widest">Toca un punto en el mapa</div>
-
-    <div id="wg-wrapper">
-        <div id="wg-container">
-            <div class="p-10 text-center text-gray-400 italic">Cargando señales y flechas...</div>
+        <div id="wg-view">
+            <div id="loading-msg" class="p-10 text-center text-gray-500 italic">Selecciona un punto para cargar datos reales con flechas...</div>
+            <iframe id="wg-iframe" src=""></iframe>
         </div>
     </div>
 
     <script>
         const spots = [
             { name: "Muros", id: 499696, lat: 42.774, lng: -9.057 },
-            { name: "Louro / Ancoradoiro", id: 14670, lat: 42.756, lng: -9.102 },
-            { name: "Esteiro", id: 211051, lat: 42.788, lng: -8.983 },
             { name: "Noia (Testal)", id: 122550, lat: 42.783, lng: -8.910 },
             { name: "Portosín", id: 208206, lat: 42.760, lng: -8.940 },
             { name: "Aguieira", id: 48734, lat: 42.741, lng: -8.962 },
             { name: "Porto do Son", id: 48733, lat: 42.723, lng: -9.006 },
-            { name: "Queiruga", id: 499700, lat: 42.684, lng: -9.043 },
             { name: "Ribeira / Carrageiros", id: 719, lat: 42.558, lng: -8.995 },
-            { name: "Aguiño", id: 499701, lat: 42.523, lng: -9.012 },
-            { name: "A Pobra", id: 211052, lat: 42.603, lng: -8.934 },
             { name: "Boiro (Barraña)", id: 501118, lat: 42.641, lng: -8.885 },
-            { name: "Rianxo", id: 499702, lat: 42.651, lng: -8.814 },
-            { name: "Vilagarcía", id: 475161, lat: 42.597, lng: -8.765 },
             { name: "Illa de Arousa", id: 48737, lat: 42.565, lng: -8.874 },
-            { name: "Cambados", id: 217403, lat: 42.515, lng: -8.815 },
-            { name: "O Grove / Lanzada", id: 32516, lat: 42.443, lng: -8.878 },
-            { name: "San Vicente", id: 48738, lat: 42.461, lng: -8.914 }
+            { name: "O Grove / Lanzada", id: 32516, lat: 42.443, lng: -8.878 }
         ];
 
-        var map = L.map('map', { zoomControl: false }).setView([42.65, -8.95], 11);
+        var map = L.map('map', { zoomControl: false }).setView([42.65, -8.95], 10);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}').addTo(map);
 
-        function loadWindguru(id, name) {
-            document.getElementById('spot-label').innerText = "Viendo: " + name;
-            const container = document.getElementById('wg-container');
-            container.innerHTML = ""; 
-
-            const script = document.createElement('script');
-            const uid = "wg_fwdg_" + id + "_3_" + Date.now();
-            script.id = uid;
-
-            // PARÁMETROS REFORZADOS:
-            // wj=knots (nudos), tj=c (Celsius), waj=m (metros)
-            // m=3 (modelo mezclado), fhours=240 (10 días)
-            // Añadimos parámetros de visualización completa
-            const args = [
-                "s=" + id,
-                "m=3",
-                "uid=" + uid,
-                "wj=knots",
-                "tj=c",
-                "waj=m",
-                "fhours=240",
-                "p=WINDSPD,GUST,MWINDDIR,SMWAVE,HTSGW,PERPW,DIRPW,TMP,TCDC,APCP1s,SLP",
-                "cgh=1", // Forzar gráficos
-                "pk=1",  // Mostrar flechas siempre
-                "lng=es" // Idioma español
-            ];
-
-            script.src = "https://www.windguru.cz/js/widget.php?" + args.join("&");
-            container.appendChild(script);
+        function openSpot(id, name) {
+            document.getElementById('spot-name').innerText = "Viendo: " + name;
+            document.getElementById('loading-msg').style.display = 'none';
+            
+            // Usamos la URL de visualización de Windguru para móviles
+            // Esto fuerza a que se vea la tabla completa con flechas
+            const url = `https://www.windguru.cz/int/distr.php?u=${id}&s=${id}&m=3&p=WINDSPD,GUST,MWINDDIR,SMWAVE,HTSGW,PERPW,DIRPW,TMP,TCDC,APCP1s&USD=1`;
+            
+            const iframe = document.getElementById('wg-iframe');
+            iframe.src = url;
+            
+            // Hacemos scroll automático al inicio del widget al cambiar
+            document.getElementById('wg-view').scrollTop = 0;
         }
 
         spots.forEach(spot => {
             let marker = L.circleMarker([spot.lat, spot.lng], {
-                radius: 9, fillColor: "#38bdf8", color: "#fff", weight: 2, fillOpacity: 0.9
+                radius: 10, fillColor: "#38bdf8", color: "#fff", weight: 2, fillOpacity: 0.9
             }).addTo(map);
             
             marker.on('click', () => {
-                loadWindguru(spot.id, spot.name);
+                openSpot(spot.id, spot.name);
                 map.panTo([spot.lat, spot.lng]);
             });
             marker.bindTooltip(spot.name);
         });
 
-        window.onload = () => loadWindguru(719, "Ribeira / Carrageiros");
+        // Cargar primero por defecto
+        window.onload = () => openSpot(719, "Ribeira / Carrageiros");
     </script>
 </body>
 </html>
