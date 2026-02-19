@@ -3,130 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SargoGuru V11 - Reset</title>
+    <title>SargoGuru V12 - Profesional</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        /* Permitimos que la página crezca todo lo necesario hacia abajo */
-        body, html { 
-            margin: 0; 
-            padding: 0; 
-            background: #fff; 
-            font-family: Arial, sans-serif;
-            overflow-x: hidden;
-            overflow-y: auto !important; /* Scroll vertical libre */
-        }
-
-        /* 1. MAPA ARRIBA: Altura pequeña para dejar ver los datos */
-        #map { 
-            height: 220px; 
-            width: 100%; 
-            border-bottom: 2px solid #000;
-        }
-
-        .spot-header {
-            background: #000;
-            color: #4ade80;
-            padding: 10px;
-            text-align: center;
-            font-size: 12px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
-        /* 2. CONTENEDOR DEL WIDGET: Sin límites de altura */
-        #wg-container {
-            width: 100%;
-            min-height: 1000px;
-            padding-bottom: 100px;
-        }
-
-        .leaflet-tooltip { background: #000; color: #fff; border: 1px solid #4ade80; font-weight: bold; }
+        body, html { margin: 0; padding: 0; background: #fff; overflow-y: auto !important; }
+        /* Mapa tamaño banner - no bloquea el scroll */
+        #map { height: 200px; width: 100%; border-bottom: 2px solid #000; position: sticky; top: 0; z-index: 1000; }
+        .spot-info { background: #000; color: #4ade80; padding: 8px; text-align: center; font-family: sans-serif; font-size: 11px; font-weight: bold; position: sticky; top: 200px; z-index: 999; border-bottom: 1px solid #333; }
+        /* Contenedor del widget libre para scroll vertical y horizontal */
+        #wg-container { width: 100%; overflow-x: auto; min-height: 1200px; }
     </style>
 </head>
 <body>
 
-    <div id="map"></div>
+<div id="map"></div>
+<div id="spot-name" class="spot-info">SELECCIONA UN SPOT EN EL MAPA</div>
+<div id="wg-container"><div id="wg_target"></div></div>
 
-    <div id="spot-name" class="spot-header">Cargando puntos de Galicia...</div>
+<script>
+    // IDs Y COORDENADAS OFICIALES DE WINDGURU (GALICIA)
+    const spots = [
+        { name: "Muros", id: 499696, lat: 42.7745, lng: -9.0575 },
+        { name: "Lariño", id: 48729, lat: 42.7667, lng: -9.1100 },
+        { name: "Noia (Testal)", id: 122550, lat: 42.7836, lng: -8.9102 },
+        { name: "Portosín", id: 208206, lat: 42.7602, lng: -8.9403 },
+        { name: "Playa de Aguieira", id: 48734, lat: 42.7410, lng: -8.9620 },
+        { name: "Porto do Son", id: 48733, lat: 42.7234, lng: -9.0067 },
+        { name: "Corrubedo", id: 48735, lat: 42.5762, lng: -9.0821 },
+        { name: "Ribeira (Carrageiros)", id: 719, lat: 42.5582, lng: -8.9954 },
+        { name: "A Pobra do Caramiñal", id: 211052, lat: 42.6032, lng: -8.9341 },
+        { name: "Boiro", id: 501118, lat: 42.6412, lng: -8.8854 },
+        { name: "Rianxo", id: 499702, lat: 42.6512, lng: -8.8142 },
+        { name: "Illa de Arousa", id: 48737, lat: 42.5654, lng: -8.8741 },
+        { name: "Vilagarcía", id: 475161, lat: 42.5978, lng: -8.7654 },
+        { name: "O Grove", id: 499704, lat: 42.4965, lng: -8.8643 },
+        { name: "A Lanzada", id: 32516, lat: 42.4432, lng: -8.8781 }
+    ];
 
-    <div id="wg-container">
-        <div id="wg_target"></div>
-    </div>
+    var map = L.map('map', { zoomControl: false }).setView([42.65, -8.95], 10);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
 
-    <script>
-        // --- BASE DE DATOS DE SPOTS (Coordenadas verificadas) ---
-        const spots = [
-            // MUROS Y NOIA
-            { name: "Muros", id: 499696, lat: 42.7745, lng: -9.0575 },
-            { name: "Noia (Testal)", id: 122550, lat: 42.7836, lng: -8.9102 },
-            { name: "Portosín", id: 208206, lat: 42.7602, lng: -8.9403 },
-            { name: "Playa de Aguieira", id: 48734, lat: 42.7410, lng: -8.9620 },
-            { name: "Louro (Ancoradoiro)", id: 14670, lat: 42.7565, lng: -9.1023 },
-            { name: "Porto do Son", id: 48733, lat: 42.7234, lng: -9.0067 },
-            
-            // AROUSA
-            { name: "Carrageiros (Ribeira)", id: 719, lat: 42.5582, lng: -8.9954 },
-            { name: "Aguiño", id: 499701, lat: 42.5234, lng: -9.0123 },
-            { name: "Boiro (Barraña)", id: 501118, lat: 42.6412, lng: -8.8854 },
-            { name: "Pobra do Caramiñal", id: 211052, lat: 42.6032, lng: -8.9341 },
-            { name: "Illa de Arousa", id: 48737, lat: 42.5654, lng: -8.8741 },
-            { name: "Vilagarcía", id: 475161, lat: 42.5978, lng: -8.7654 },
-            { name: "Cambados", id: 217403, lat: 42.5152, lng: -8.8156 },
-            { name: "A Lanzada", id: 32516, lat: 42.4432, lng: -8.8781 },
-            { name: "O Grove", id: 499704, lat: 42.4965, lng: -8.8643 }
+    function loadWindguru(id, name) {
+        document.getElementById('spot-name').innerText = "VIENDO: " + name;
+        const container = document.getElementById('wg-container');
+        container.innerHTML = `<div id="wg_target"></div>`;
+
+        const script = document.createElement('script');
+        const uid = "wg_fwdg_" + id + "_3_" + Date.now();
+        script.id = uid;
+
+        // PARÁMETROS PARA MOSTRAR TODO (FLECHAS, OLAS, MAREAS)
+        const args = [
+            "s=" + id, "m=3", "uid=" + uid,
+            "wj=knots", "tj=c", "waj=m", "fhours=240",
+            "p=WINDSPD,GUST,MWINDDIR,SMWAVE,HTSGW,PERPW,DIRPW,TMP,TCDC,APCP1s,RH,SLP,WSTAR,TIDE",
+            "lng=es", "pk=1", "cgh=1"
         ];
 
-        // INICIALIZAR MAPA
-        var map = L.map('map', { zoomControl: false }).setView([42.65, -8.95], 10);
-        
-        // Capa Satélite
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
+        script.src = "https://www.windguru.cz/js/widget.php?" + args.join("&");
+        container.appendChild(script);
+    }
 
-        function cargarWindguru(id, name) {
-            document.getElementById('spot-name').innerText = "Viendo: " + name;
-            
-            const container = document.getElementById('wg-container');
-            container.innerHTML = ""; // Limpiar el anterior
+    spots.forEach(spot => {
+        L.marker([spot.lat, spot.lng]).addTo(map)
+            .on('click', (e) => {
+                loadWindguru(spot.id, spot.name);
+                map.panTo(e.latlng);
+            })
+            .bindTooltip(spot.name);
+    });
 
-            // Crear el script original de Windguru
-            const script = document.createElement('script');
-            const uid = "wg_fwdg_" + id + "_3_" + Date.now();
-            script.id = uid;
-
-            // Configuración que garantiza flechas y colores originales
-            const args = [
-                "s=" + id,
-                "m=3",
-                "uid=" + uid,
-                "wj=knots", // Nudos
-                "tj=c",     // Celsius
-                "waj=m",    // Metros
-                "fhours=240", // 10 días
-                "p=WINDSPD,GUST,MWINDDIR,SMWAVE,HTSGW,PERPW,DIRPW,TMP,TCDC,APCP1s,RH,SLP,WSTAR"
-            ];
-
-            script.src = "https://www.windguru.cz/js/widget.php?" + args.join("&");
-            container.appendChild(script);
-        }
-
-        // COLOCAR MARCAS
-        spots.forEach(spot => {
-            let marker = L.circleMarker([spot.lat, spot.lng], {
-                radius: 10, fillColor: "#38bdf8", color: "#fff", weight: 2, fillOpacity: 0.9
-            }).addTo(map);
-            
-            marker.on('click', () => {
-                cargarWindguru(spot.id, spot.name);
-                map.panTo([spot.lat, spot.lng]);
-            });
-
-            marker.bindTooltip(spot.name, { direction: 'top' });
-        });
-
-        // Cargar Ribeira por defecto
-        window.onload = () => cargarWindguru(719, "Carrageiros (Ribeira)");
-
-    </script>
+    window.onload = () => loadWindguru(719, "Ribeira (Carrageiros)");
+</script>
 </body>
 </html>
