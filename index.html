@@ -3,193 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SargoGuru PRO - Estilo WG</title>
+    <title>SargoGuru PRO - Mapa + Widget</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background: #f4f4f4; margin: 0; padding-bottom: 70px; font-family: Arial, sans-serif; -webkit-overflow-scrolling: touch; }
+        body { background: #1a1a1a; margin: 0; padding: 0; font-family: sans-serif; overflow-x: hidden; }
         
-        /* MAPA */
-        #map { height: 200px; width: 100%; border-bottom: 2px solid #ccc; }
+        /* Contenedor del Mapa */
+        #map-container {
+            width: 100%;
+            height: 250px;
+            border-bottom: 3px solid #333;
+            position: relative;
+        }
+        #map { height: 100%; width: 100%; }
 
-        /* TABLA CONTENEDOR */
-        .tabla-container { width: 100%; overflow-x: auto; background: white; }
-        table { border-collapse: collapse; min-width: 900px; table-layout: fixed; }
-        
-        /* CELDAS */
-        td { border: 1px solid #e0e0e0; height: 30px; text-align: center; font-size: 13px; width: 45px; padding: 2px 0; }
-        
-        /* COLUMNA IZQUIERDA FIJA */
-        .col-fija {
-            position: sticky; left: 0; background: #f8f9fa; z-index: 40;
-            width: 140px !important; text-align: right; padding-right: 8px;
-            font-size: 13px; color: #333; border-right: 2px solid #ccc;
+        /* Contenedor del Widget */
+        .widget-wrapper {
+            width: 100%;
+            background: #fff;
+            padding-top: 10px;
+            min-height: 600px;
         }
 
-        /* COLORES WINDGURU (Basados en tu foto) */
-        .wg-blanco { background: #ffffff; }
-        .wg-azul-claro { background: #c1f0f0; }
-        .wg-verde-claro { background: #66ff66; }
-        .wg-verde { background: #00ff00; }
-        .wg-amarillo { background: #ffff00; }
-        .wg-naranja { background: #ff6600; color: white; font-weight: bold; }
-        .wg-rojo { background: #ff0000; color: white; font-weight: bold; }
-        .wg-magenta { background: #ff00ff; color: white; font-weight: bold; }
-        
-        /* COLORES OLAS (Azules) */
-        .ola-1 { background: #ccccff; } .ola-2 { background: #9999ff; } .ola-3 { background: #6666ff; color: white; }
-        
-        /* COLORES PERIODO (Rojizos) */
-        .per-14 { background: #ff9999; font-weight: bold; } .per-13 { background: #ffcccc; } .per-12 { background: #ffeeee; }
-        
-        /* TEMPERATURA */
-        .temp-15 { background: #ffe680; } .temp-11 { background: #fff2b3; }
-        
-        /* FLECHAS DIRECCIÓN */
-        .dir-flecha { font-size: 16px; font-weight: bold; line-height: 1; }
-        .rotate-45 { display: inline-block; transform: rotate(45deg); }
-        .rotate-90 { display: inline-block; transform: rotate(90deg); }
-        .rotate-135 { display: inline-block; transform: rotate(135deg); }
-        .rotate-180 { display: inline-block; transform: rotate(180deg); }
-        
-        /* ESTRELLAS WINDGURU */
-        .estrella { color: #ffd700; font-size: 14px; letter-spacing: -2px; }
-
-        /* MAREAS INTEGRADA */
-        .fila-marea { height: 50px; padding: 0 !important; border-bottom: none; }
+        /* Estilo para que el mapa se vea tipo satélite pro */
+        .leaflet-container { background: #000; }
     </style>
 </head>
 <body>
 
-    <div class="bg-white text-black p-2 flex justify-between items-center border-b border-gray-300 sticky top-0 z-[1500]">
-        <div class="font-bold text-lg flex items-center gap-2">
-            <span class="bg-black text-white px-2 py-0.5 rounded-full text-xs">WG</span>
-            Carrageiros
-        </div>
-        <div class="text-xs text-gray-500 font-bold">Actualizado: 19.2. 18:29</div>
+    <div class="bg-black text-white p-3 flex justify-between items-center sticky top-0 z-[2000] border-b border-gray-800">
+        <span class="font-bold text-sky-400">SARGOGURU <span class="text-white text-xs">| GALICIA</span></span>
+        <div class="text-[10px] bg-gray-800 px-2 py-1 rounded">V3.8</div>
     </div>
 
-    <div id="map"></div>
-
-    <div class="tabla-container">
-        <table>
-            <tr class="bg-gray-100 font-bold text-gray-600 text-xs">
-                <td class="col-fija border-none bg-white"></td>
-                <td>L 23.<br>17h</td><td>L 23.<br>19h</td><td>L 23.<br>22h</td><td>M 24.<br>01h</td><td>M 24.<br>04h</td><td>M 24.<br>07h</td><td>M 24.<br>10h</td><td>M 24.<br>13h</td><td>M 24.<br>16h</td><td>M 24.<br>19h</td>
-            </tr>
-            
-            <tr>
-                <td class="col-fija">Velocidad viento (km/h)</td>
-                <td class="wg-blanco">6</td><td class="wg-blanco">8</td><td class="wg-azul-claro">11</td><td class="wg-azul-claro">13</td><td class="wg-verde-claro">18</td><td class="wg-verde">24</td><td class="wg-verde">27</td><td class="wg-amarillo">32</td><td class="wg-amarillo">34</td><td class="wg-amarillo">31</td>
-            </tr>
-            
-            <tr>
-                <td class="col-fija">Rachas (km/h)</td>
-                <td class="wg-blanco">10</td><td class="wg-azul-claro">11</td><td class="wg-verde-claro">19</td><td class="wg-verde">24</td><td class="wg-amarillo">35</td><td class="wg-naranja">44</td><td class="wg-rojo">52</td><td class="wg-magenta">58</td><td class="wg-magenta">62</td><td class="wg-magenta">57</td>
-            </tr>
-            
-            <tr>
-                <td class="col-fija">Dirección viento (→)</td>
-                <td><span class="dir-flecha rotate-45">↑</span></td>
-                <td><span class="dir-flecha rotate-45">↑</span></td>
-                <td><span class="dir-flecha rotate-45">↑</span></td>
-                <td><span class="dir-flecha">↑</span></td>
-                <td><span class="dir-flecha">↑</span></td>
-                <td><span class="dir-flecha">↑</span></td>
-                <td><span class="dir-flecha">↑</span></td>
-                <td><span class="dir-flecha">↑</span></td>
-                <td><span class="dir-flecha">↑</span></td>
-                <td><span class="dir-flecha">↑</span></td>
-            </tr>
-            
-            <tr>
-                <td class="col-fija">Ola (m)</td>
-                <td class="ola-2">2.4</td><td class="ola-1">2.3</td><td class="ola-1">2.2</td><td class="ola-1">2.1</td><td class="ola-1">2</td><td class="ola-1">2</td><td class="ola-1">2.1</td><td class="ola-1">2.2</td><td class="ola-2">2.4</td><td class="ola-2">2.5</td>
-            </tr>
-            
-            <tr>
-                <td class="col-fija">*Período olas (seg.)</td>
-                <td class="per-14">14</td><td class="per-14">14</td><td class="per-13">13</td><td class="per-13">13</td><td class="per-13">13</td><td class="per-13">13</td><td class="per-12">12</td><td class="per-12">12</td><td class="per-12">12</td><td class="per-12">12</td>
-            </tr>
-            
-            <tr>
-                <td class="col-fija">Dirección olas (→)</td>
-                <td><span class="dir-flecha rotate-135" style="color:gray;">↑</span></td>
-                <td><span class="dir-flecha rotate-135">↑</span></td>
-                <td><span class="dir-flecha rotate-135">↑</span></td>
-                <td><span class="dir-flecha rotate-135">↑</span></td>
-                <td><span class="dir-flecha rotate-135">↑</span></td>
-                <td><span class="dir-flecha rotate-135">↑</span></td>
-                <td><span class="dir-flecha rotate-135">↑</span></td>
-                <td><span class="dir-flecha rotate-135">↑</span></td>
-                <td><span class="dir-flecha rotate-135">↑</span></td>
-                <td><span class="dir-flecha rotate-135">↑</span></td>
-            </tr>
-            
-            <tr>
-                <td class="col-fija">*Temperatura (°C)</td>
-                <td class="temp-15">15</td><td class="temp-11">13</td><td class="temp-11">11</td><td class="temp-11">11</td><td class="temp-11">12</td><td class="temp-11">13</td><td class="temp-11">13</td><td class="temp-15">14</td><td class="temp-15">14</td><td class="temp-11">13</td>
-            </tr>
-
-            <tr style="height: 25px;">
-                <td class="col-fija">Nubosidad (%)</td>
-                <td class="bg-gray-300">45</td><td class="bg-gray-400">69</td><td class="bg-gray-400">60</td><td class="bg-gray-400">66</td><td>10</td><td></td><td>32</td><td class="bg-gray-400">64</td><td class="bg-gray-400">58</td><td class="bg-gray-500 text-white">100</td>
-            </tr>
-
-            <tr style="height: 20px;">
-                <td class="col-fija">*Precip. (mm/1h)</td>
-                <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="text-blue-500">0.1</td><td class="text-blue-500">0.3</td><td class="text-blue-500">0.3</td>
-            </tr>
-
-            <tr style="height: 25px;">
-                <td class="col-fija">Valoración Windguru</td>
-                <td></td><td></td><td></td><td></td><td></td><td class="estrella">★★</td><td class="estrella">★★</td><td class="estrella">★★★</td><td class="estrella">★★★</td><td class="estrella">★★★</td>
-            </tr>
-
-            <tr>
-                <td class="col-fija font-bold">Mareas</td>
-                <td colspan="10" class="fila-marea">
-                    <svg width="100%" height="50" viewBox="0 0 450 50" preserveAspectRatio="none">
-                        <defs>
-                            <linearGradient id="mareaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                                <stop offset="0%" style="stop-color:#00ff00;stop-opacity:0.8" />
-                                <stop offset="50%" style="stop-color:#ffffff;stop-opacity:0" />
-                                <stop offset="100%" style="stop-color:#ff0000;stop-opacity:0.8" />
-                            </linearGradient>
-                        </defs>
-                        <text x="30" y="45" font-size="10" fill="#333" font-family="Arial">02:20</text>
-                        <text x="210" y="10" font-size="10" fill="#333" font-family="Arial">08:35</text>
-                        <text x="400" y="45" font-size="10" fill="#333" font-family="Arial">14:50</text>
-                        
-                        <path d="M0,25 Q45,0 90,25 Q135,50 180,25 Q225,0 270,25 Q315,50 360,25 Q405,0 450,25" stroke="#000" stroke-width="1.5" fill="none" />
-                        <path d="M0,25 Q45,0 90,25 Q135,50 180,25 Q225,0 270,25 Q315,50 360,25 Q405,0 450,25 L450,25 L0,25 Z" fill="url(#mareaGrad)" />
-                    </svg>
-                </td>
-            </tr>
-        </table>
+    <div id="map-container">
+        <div id="map"></div>
     </div>
 
-    <div class="fixed bottom-0 w-full bg-white flex justify-around p-2 text-[10px] font-bold z-[1500] border-t border-gray-300">
-        <div class="text-center text-blue-600">🏠<br>Inicio</div>
-        <div class="text-center text-gray-400">★<br>Favoritos</div>
-        <div class="text-center text-gray-400">🗺️<br>Mapas</div>
-        <div class="text-center text-gray-400">⚙️<br>Ajustes</div>
+    <div class="widget-wrapper">
+        <script id="wg_fwdg_719_3_1708365000000">
+            (function (window, document) {
+              var loader = function () {
+                var arg = ["s=719", "m=3", "uid=wg_fwdg_719_3_1708365000000", "wj=knots", "tj=c", "waj=m", "fhours=240", "p=WINDSPD,GUST,MWINDDIR,SMWAVE,HTSGW,PERPW,DIRPW,TMP,FLHSTR,TCDC,APCP1s,RH,SLP,WSTAR"];
+                var script = document.createElement("script");
+                var tag = document.getElementsByTagName("script")[0];
+                script.src = "https://www.windguru.cz/js/widget.php?" + (arg.join("&"));
+                tag.parentNode.insertBefore(script, tag);
+              };
+              window.addEventListener ? window.addEventListener("load", loader, false) : window.attachEvent("onload", loader);
+            })(window, document);
+        </script>
+    </div>
+
+    <div class="fixed bottom-0 w-full bg-black text-white flex justify-around p-3 text-[10px] font-bold z-[2000] border-t border-gray-800">
+        <div class="text-center text-sky-400">📍 SPOT ACTUAL</div>
+        <div class="text-center opacity-50">⭐ FAVORITOS</div>
+        <div class="text-center opacity-50">🌊 MAREAS</div>
     </div>
 
     <script>
-        // Inicializar mapa en Galicia (vista centrada)
-        var map = L.map('map', {zoomControl: false}).setView([43.0, -8.5], 8);
+        // Inicializar Mapa centrado en la zona de Ribeira/Carrageiros
+        var map = L.map('map', {zoomControl: false}).setView([42.558, -8.995], 13);
         
-        // Capa Satélite
+        // Capa Satélite de ESRI (Google Earth Style)
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
+        
+        // Capa de etiquetas (Nombres de sitios)
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}').addTo(map);
         
-        // Marcadores de Spots de la Costa Gallega
-        L.marker([42.558, -8.995]).addTo(map).bindPopup('Carrageiros');
-        L.marker([43.287, -8.704]).addTo(map).bindPopup('Razo');
-        L.marker([43.636, -8.110]).addTo(map).bindPopup('Pantín');
-        L.marker([42.138, -8.841]).addTo(map).bindPopup('Patos (Nigrán)');
+        // Marcador pro en el spot
+        var marker = L.marker([42.558, -8.995]).addTo(map);
+        marker.bindPopup("<b>Carrageiros</b><br>Ribeira, Galicia").openPopup();
     </script>
 </body>
 </html>
