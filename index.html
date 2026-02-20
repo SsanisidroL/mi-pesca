@@ -4,14 +4,19 @@
 <meta charset="UTF-8">
 <title>App de Pesca — Cuaderno de bitácora</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
 <style>
   body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-  #map { height: 300px; }
+  #map { height: 400px; width: 100%; }
   #widget { width: 100%; height: 500px; border: none; }
   .container { padding: 10px; }
   .btn { background: #0078FF; color: white; padding: 10px; border: none; cursor: pointer; }
 </style>
 </head>
+
 <body>
 
 <div class="container">
@@ -37,8 +42,10 @@
   </iframe>
 </div>
 
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
 <script>
-  // Lista de spots con sus coordenadas aproximadas
   const spots = [
     { name: "Spot 48735", id: "48735", lat: 42.850, lon: -9.050 },
     { name: "Spot 48734", id: "48734", lat: 42.840, lon: -9.040 },
@@ -47,9 +54,8 @@
     { name: "Spot 128497", id: "128497", lat: 42.550, lon: -8.950 },
   ];
 
-  // Inicializa mapa con OpenStreetMap
-  const mapDiv = document.getElementById('map');
-  const map = L.map(mapDiv).setView([42.7, -8.9], 9);
+  const map = L.map('map').setView([42.7, -8.9], 9);
+
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 18,
   }).addTo(map);
@@ -66,7 +72,7 @@
   function openLog() {
     const spot = prompt("Nombre del spot seleccionado:");
     const date = prompt("Fecha (YYYY-MM-DD):");
-    const conditions = prompt("Condiciones (copia/pega del widget):");
+    const conditions = prompt("Condiciones:");
     const catches = prompt("Capturas:");
     const notes = prompt("Notas:");
 
@@ -77,10 +83,6 @@
     alert("✅ Guardado en tu Cuaderno de bitácora");
   }
 </script>
-
-<!-- Importa Leaflet JS para mapas (gratis) -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 </body>
 </html>
