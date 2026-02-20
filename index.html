@@ -5,13 +5,11 @@
 <title>App de Pesca — Cuaderno de bitácora</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
 <style>
   body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
   #map { height: 400px; width: 100%; }
-  #widget { width: 100%; height: 500px; border: none; }
   .container { padding: 10px; }
   .btn { background: #0078FF; color: white; padding: 10px; border: none; cursor: pointer; }
 </style>
@@ -22,11 +20,6 @@
 <div class="container">
   <h2>📍 Mapa de Spots</h2>
   <div id="map"></div>
-</div>
-
-<div class="container">
-  <h2>🌊 Pronóstico - Windguru</h2>
-  <iframe id="widget"></iframe>
 </div>
 
 <div class="container">
@@ -42,7 +35,6 @@
   </iframe>
 </div>
 
-<!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
@@ -63,9 +55,10 @@
   spots.forEach(s => {
     const marker = L.marker([s.lat, s.lon]).addTo(map);
     marker.bindPopup(s.name);
+
     marker.on('click', () => {
-      document.getElementById('widget').src =
-        "https://www.windguru.cz/int/index.php?sc=" + s.id;
+      const url = "https://www.windguru.cz/int/index.php?sc=" + s.id;
+      window.open(url, "_blank");
     });
   });
 
