@@ -10,6 +10,7 @@
 <style>
   body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
   #map { height: 400px; width: 100%; }
+  #widget { width: 100%; height: 300px; border: none; }
   .container { padding: 10px; }
   .btn { background: #0078FF; color: white; padding: 10px; border: none; cursor: pointer; }
 </style>
@@ -23,6 +24,11 @@
 </div>
 
 <div class="container">
+  <h2>🌊 Pronóstico - Windguru</h2>
+  <iframe id="widget"></iframe>
+</div>
+
+<div class="container">
   <button class="btn" onclick="openLog()">📓 Cuaderno de bitácora</button>
 </div>
 
@@ -30,7 +36,7 @@
   <h2>🛰️ Mapa Satélite de Galicia</h2>
   <iframe
     width="100%" height="450"
-    src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d100000!2d-8.900000!3d42.700000!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1ses!2ses!4v1700000000000!5m2!1ses!2ses"
+    src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d100000!2d-8.900000!3d42.700000!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1ses!2ses"
     style="border:0;" allowfullscreen="" loading="lazy">
   </iframe>
 </div>
@@ -42,8 +48,6 @@
     { name: "Spot 48735", id: "48735", lat: 42.850, lon: -9.050 },
     { name: "Spot 48734", id: "48734", lat: 42.840, lon: -9.040 },
     { name: "Spot 48736", id: "48736", lat: 42.860, lon: -9.030 },
-    { name: "Spot 501116", id: "501116", lat: 42.600, lon: -8.950 },
-    { name: "Spot 128497", id: "128497", lat: 42.550, lon: -8.950 },
   ];
 
   const map = L.map('map').setView([42.7, -8.9], 9);
@@ -57,8 +61,9 @@
     marker.bindPopup(s.name);
 
     marker.on('click', () => {
-      const url = "https://www.windguru.cz/int/index.php?sc=" + s.id;
-      window.open(url, "_blank");
+      // Widget oficial reducido
+      document.getElementById('widget').src =
+        "https://www.windguru.cz/widget.php?sc=" + s.id + "&t=1";
     });
   });
 
